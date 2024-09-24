@@ -1,5 +1,6 @@
 #pragma once
 #include <JuceHeader.h>
+#include "Parameters.h"
 
 class PitchShifterAudioProcessor  : public juce::AudioProcessor
 {
@@ -33,7 +34,7 @@ public:
 
 private:
     
-    
+    juce::AudioProcessorValueTreeState apvts { *this, nullptr, "Parameters", createParameters() };
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PitchShifterAudioProcessor)
 };

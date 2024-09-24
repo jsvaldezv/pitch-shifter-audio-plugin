@@ -110,7 +110,8 @@ bool PitchShifterAudioProcessor::hasEditor() const
 
 juce::AudioProcessorEditor* PitchShifterAudioProcessor::createEditor()
 {
-    return new PitchShifterAudioProcessorEditor (*this);
+    //return new PitchShifterAudioProcessorEditor (*this);
+    return new juce::GenericAudioProcessorEditor (*this);
 }
 
 void PitchShifterAudioProcessor::getStateInformation (juce::MemoryBlock& /*destData*/) {}
