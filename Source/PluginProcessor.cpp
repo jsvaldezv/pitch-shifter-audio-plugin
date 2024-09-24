@@ -3,9 +3,9 @@
 
 PitchShifterAudioProcessor::PitchShifterAudioProcessor()
 #ifndef JucePlugin_PreferredChannelConfigurations
-     : AudioProcessor (BusesProperties()
-                       .withInput  ("Input",  juce::AudioChannelSet::stereo(), true)
-                       .withOutput ("Output", juce::AudioChannelSet::stereo(), true))
+    : AudioProcessor (BusesProperties()
+                          .withInput ("Input", juce::AudioChannelSet::stereo(), true)
+                          .withOutput ("Output", juce::AudioChannelSet::stereo(), true))
 #endif
 {
 }
@@ -19,29 +19,29 @@ const juce::String PitchShifterAudioProcessor::getName() const
 
 bool PitchShifterAudioProcessor::acceptsMidi() const
 {
-   #if JucePlugin_WantsMidiInput
+#if JucePlugin_WantsMidiInput
     return true;
-   #else
+#else
     return false;
-   #endif
+#endif
 }
 
 bool PitchShifterAudioProcessor::producesMidi() const
 {
-   #if JucePlugin_ProducesMidiOutput
+#if JucePlugin_ProducesMidiOutput
     return true;
-   #else
+#else
     return false;
-   #endif
+#endif
 }
 
 bool PitchShifterAudioProcessor::isMidiEffect() const
 {
-   #if JucePlugin_IsMidiEffect
+#if JucePlugin_IsMidiEffect
     return true;
-   #else
+#else
     return false;
-   #endif
+#endif
 }
 
 double PitchShifterAudioProcessor::getTailLengthSeconds() const
@@ -68,39 +68,84 @@ const juce::String PitchShifterAudioProcessor::getProgramName (int /*index*/)
 
 void PitchShifterAudioProcessor::changeProgramName (int /*index*/, const juce::String& /*newName*/) {}
 
-void PitchShifterAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock) {}
+void PitchShifterAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
+{
+    int numChannels = getTotalNumOutputChannels();
+    
+    // Pitch Rubberband
+    pitchShifterRubberband = std::make_unique<PitchShifterRubberband> (getTotalNumOutputChannels(), sampleRate, samplesPerBlock, true, true);
+    pitchShifterRubberband->setMixPercentage (100.0f);
+    
+    // Pitch phase vocoder
+    int minWindowLength = 16 * samplesPerBlock;
+    int order = 0;
+    int windowLength = 1;
+    while (windowLength < minWindowLength)
+    {
+        order++;
+        windowLength *= 2;
+    }
+
+    shifterBank.resize ((size_t) numChannels);
+    
+    for (size_t ch = 0; ch < (size_t) numChannels; ch++)
+    {
+        shifterBank[ch] = std::unique_ptr<SHIFTER> (new SHIFTER);
+        shifterBank[ch]->init (order);
+    }
+}
 
 void PitchShifterAudioProcessor::releaseResources() {}
 
 #ifndef JucePlugin_PreferredChannelConfigurations
 bool PitchShifterAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts) const
 {
-  #if JucePlugin_IsMidiEffect
+    #if JucePlugin_IsMidiEffect
     juce::ignoreUnused (layouts);
     return true;
-  #else
+    #else
     if (layouts.getMainOutputChannelSet() != juce::AudioChannelSet::mono()
-     && layouts.getMainOutputChannelSet() != juce::AudioChannelSet::stereo())
+        && layouts.getMainOutputChannelSet() != juce::AudioChannelSet::stereo())
         return false;
-   #if ! JucePlugin_IsSynth
+        #if ! JucePlugin_IsSynth
     if (layouts.getMainOutputChannelSet() != layouts.getMainInputChannelSet())
         return false;
-   #endif
+        #endif
     return true;
-  #endif
+    #endif
 }
 #endif
 
 void PitchShifterAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& /*midiMessages*/)
 {
     juce::ScopedNoDenormals noDenormals;
-    auto totalNumInputChannels  = getTotalNumInputChannels();
+    auto totalNumInputChannels = getTotalNumInputChannels();
     auto totalNumOutputChannels = getTotalNumOutputChannels();
 
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
         buffer.clear (i, 0, buffer.getNumSamples());
 
-    
+    updateParameters();
+
+    switch ((int) apvts.getRawParameterValue (Algorithm)->load())
+    {
+        case Algorithm::Rubberband:
+            pitchShifterRubberband->processBuffer (buffer);
+            break;
+
+        case Algorithm::PhaseVocoder:
+            for (size_t ch = 0; ch < (size_t) buffer.getNumChannels(); ch++)
+                shifterBank[ch]->step (buffer.getWritePointer((int) ch), buffer.getNumSamples(), shifterHopSize);
+            break;
+    }
+}
+
+void PitchShifterAudioProcessor::updateParameters()
+{
+    float semitones = apvts.getRawParameterValue (Semitones)->load();
+
+    pitchShifterRubberband->setSemitoneShift (semitones);
+    shifterHopSize = std::pow (2.0f, semitones / 12.0f);
 }
 
 bool PitchShifterAudioProcessor::hasEditor() const

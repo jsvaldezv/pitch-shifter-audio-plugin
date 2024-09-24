@@ -1,8 +1,10 @@
 #pragma once
-#include <JuceHeader.h>
 #include "Parameters.h"
+#include "Rubberband/RubberBandPitchShifter.h"
+#include "PhaseVocoder/Shifter.h"
+#include <JuceHeader.h>
 
-class PitchShifterAudioProcessor  : public juce::AudioProcessor
+class PitchShifterAudioProcessor : public juce::AudioProcessor
 {
 public:
 
@@ -11,11 +13,11 @@ public:
 
     void prepareToPlay (double sampleRate, int samplesPerBlock) override;
     void releaseResources() override;
-    
-   #ifndef JucePlugin_PreferredChannelConfigurations
+
+#ifndef JucePlugin_PreferredChannelConfigurations
     bool isBusesLayoutSupported (const BusesLayout& layouts) const override;
-   #endif
-    
+#endif
+
     void processBlock (juce::AudioBuffer<float>&, juce::MidiBuffer&) override;
     juce::AudioProcessorEditor* createEditor() override;
     bool hasEditor() const override;
@@ -33,8 +35,15 @@ public:
     void setStateInformation (const void* data, int sizeInBytes) override;
 
 private:
-    
+
     juce::AudioProcessorValueTreeState apvts { *this, nullptr, "Parameters", createParameters() };
+
+    void updateParameters();
+
+    std::unique_ptr<PitchShifterRubberband> pitchShifterRubberband;
     
+    std::vector<std::unique_ptr<SHIFTER>> shifterBank;
+    float shifterHopSize { 0.0f };
+
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PitchShifterAudioProcessor)
 };

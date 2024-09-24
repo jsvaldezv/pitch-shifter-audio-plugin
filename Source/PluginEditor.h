@@ -1,11 +1,11 @@
 #pragma once
-#include <JuceHeader.h>
 #include "PluginProcessor.h"
+#include <JuceHeader.h>
 
 class PitchShifterAudioProcessorEditor : public juce::AudioProcessorEditor
 {
 public:
-    
+
     PitchShifterAudioProcessorEditor (PitchShifterAudioProcessor&);
     ~PitchShifterAudioProcessorEditor() override;
 
