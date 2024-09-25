@@ -71,6 +71,11 @@ void PitchShifterAudioProcessor::changeProgramName (int /*index*/, const juce::S
 void PitchShifterAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
     int numChannels = getTotalNumOutputChannels();
+    
+    juce::dsp::ProcessSpec spec;
+    spec.maximumBlockSize = (juce::uint32) samplesPerBlock;
+    spec.numChannels = (juce::uint32) getTotalNumOutputChannels();
+    spec.sampleRate = sampleRate;
 
     // Pitch Rubberband
     rubberbandPitchShifter = std::make_unique<RubberbandPitchShifter> (getTotalNumOutputChannels(), sampleRate, samplesPerBlock, true, true);
@@ -95,11 +100,14 @@ void PitchShifterAudioProcessor::prepareToPlay (double sampleRate, int samplesPe
     }
 
     // McPherson
-    mcPhersonPitchShifter.preparePitch (sampleRate, numChannels);
+    mcPhersonPitchShifter.preparePitch ((int) spec.sampleRate, (int) spec.numChannels);
 
     // Dysomni
     for (int ch = 0; ch < numChannels; ch++)
         dysomniPitchShifter[ch].setFs ((float) sampleRate);
+    
+    // Townley
+    //townleyPitchShifter.prepare (spec);
 }
 
 void PitchShifterAudioProcessor::releaseResources() {}
@@ -162,6 +170,8 @@ void PitchShifterAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
             }
             break;
     }
+    
+    //townleyPitchShifter.process (buffer);
 }
 
 void PitchShifterAudioProcessor::updateParameters()
@@ -174,6 +184,8 @@ void PitchShifterAudioProcessor::updateParameters()
 
     for (int channel = 0; channel < getTotalNumOutputChannels(); channel++)
         dysomniPitchShifter[channel].setPitch (currentSemitones);
+    
+    //townleyPitchShifter.setSemitones (currentSemitones);
 }
 
 bool PitchShifterAudioProcessor::hasEditor() const

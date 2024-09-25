@@ -4,6 +4,7 @@
 #include "Parameters.h"
 #include "Rubberband/RubberBandPitchShifter.h"
 #include "WubVocoder/PitchShifter.h"
+#include "Townley/TownleyPitchShifter.h"
 #include <JuceHeader.h>
 
 class PitchShifterAudioProcessor : public juce::AudioProcessor
@@ -52,6 +53,9 @@ private:
     McPhersonPitchShifter mcPhersonPitchShifter; // https://github.com/juandagilc/Audio-Effects
 
     DysomniPitchShifter dysomniPitchShifter[2]; // https://github.com/dysomni/Harmonizer
+    
+    // Pending...
+    //TownleyPitchShifter townleyPitchShifter; // https://github.com/MartinTownley/JUCE_VDL_Pitch-Shifter
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PitchShifterAudioProcessor)
 };
