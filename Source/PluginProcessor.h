@@ -6,6 +6,7 @@
 #include "Townley/TownleyPitchShifter.h"
 #include "WangRubberband/WangRubberBandPitchShifter.h"
 #include "WubVocoder/WubPitchShifter.h"
+#include "WangSoundTouch/WangSoundTouchPitchShifter.h"
 
 class PitchShifterAudioProcessor : public juce::AudioProcessor
 {
@@ -46,6 +47,8 @@ private:
 
     // Algorithms
     WangRubberBandPitchShifter wangPitchShifter; // https://github.com/wangchengzhong/Voice-Changer/blob/master/Source/PitchShifterRubberband.h
+    
+    WangSoundTouchPitchShifter wangSoundTouchPitchShifter; // https://github.com/wangchengzhong/Voice-Changer/blob/master/Source/PitchShifterSoundTouch.h
 
     WubPitchShifter wubPitchShifter; // https://github.com/professorwub/pitchshifter
 
