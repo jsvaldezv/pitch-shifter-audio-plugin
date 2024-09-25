@@ -58,7 +58,7 @@ private:
     // Pending...
     //TownleyPitchShifter townleyPitchShifter; // https://github.com/MartinTownley/JUCE_VDL_Pitch-Shifter
 
-    StftPitchShifter juriHockPitchShifter;
+    StftPitchShifter juriHockPitchShifter; // https://github.com/jurihock/stftPitchShiftPlugin
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PitchShifterAudioProcessor)
 };
