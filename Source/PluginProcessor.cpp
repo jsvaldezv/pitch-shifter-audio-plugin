@@ -75,7 +75,7 @@ void PitchShifterAudioProcessor::prepareToPlay (double sampleRate, int samplesPe
     spec.numChannels = (juce::uint32) getTotalNumOutputChannels();
     spec.sampleRate = sampleRate;
 
-    rubberbandPitchShifter.prepare (spec, true, true);
+    wangPitchShifter.prepare (spec, true, true);
     wubPitchShifter.prepare (spec);
     mcPhersonPitchShifter.prepare (spec);
     dysomniPitchShifter.prepare (spec);
@@ -121,8 +121,8 @@ void PitchShifterAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
 
     switch ((int) apvts.getRawParameterValue (Algorithm)->load())
     {
-        case Algorithm::Rubberband:
-            rubberbandPitchShifter.process (buffer);
+        case Algorithm::WangRubberband:
+            wangPitchShifter.process (buffer);
             break;
 
         case Algorithm::WubVocoder:
@@ -153,14 +153,14 @@ void PitchShifterAudioProcessor::updateParameters()
 {
     currentSemitones = (int) apvts.getRawParameterValue (Semitones)->load();
 
-    rubberbandPitchShifter.setSemitones (currentSemitones);
+    wangPitchShifter.setSemitones (currentSemitones);
 
     wubPitchShifter.setSemitones (currentSemitones);
 
     mcPhersonPitchShifter.setSemitones (currentSemitones);
 
     dysomniPitchShifter.setSemitones (currentSemitones);
-    
+
     juriHockPitchShifter.setSemitones (currentSemitones);
 
     //townleyPitchShifter.setSemitones (currentSemitones);

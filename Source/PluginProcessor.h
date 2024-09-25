@@ -3,10 +3,9 @@
 #include "JuriHock/StftPitchShifter.h"
 #include "McPherson/McPhersonPitchShifter.h"
 #include "Parameters.h"
-#include "Rubberband/RubberBandPitchShifter.h"
 #include "Townley/TownleyPitchShifter.h"
+#include "WangRubberband/WangRubberBandPitchShifter.h"
 #include "WubVocoder/WubPitchShifter.h"
-#include <JuceHeader.h>
 
 class PitchShifterAudioProcessor : public juce::AudioProcessor
 {
@@ -41,20 +40,19 @@ public:
 private:
 
     juce::AudioProcessorValueTreeState apvts { *this, nullptr, "Parameters", createParameters() };
-
     void updateParameters();
 
     int currentSemitones { 0 };
 
     // Algorithms
-    RubberbandPitchShifter rubberbandPitchShifter; // https://github.com/wangchengzhong/Voice-Changer/blob/master/Source/PitchShifterRubberband.h
+    WangRubberBandPitchShifter wangPitchShifter; // https://github.com/wangchengzhong/Voice-Changer/blob/master/Source/PitchShifterRubberband.h
 
     WubPitchShifter wubPitchShifter; // https://github.com/professorwub/pitchshifter
 
     McPhersonPitchShifter mcPhersonPitchShifter; // https://github.com/juandagilc/Audio-Effects
 
     DysomniPitchShifter dysomniPitchShifter; // https://github.com/dysomni/Harmonizer
-    
+
     StftPitchShifter juriHockPitchShifter; // https://github.com/jurihock/stftPitchShiftPlugin
 
     // Pending...
