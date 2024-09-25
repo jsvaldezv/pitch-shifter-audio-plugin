@@ -23,7 +23,7 @@ public:
         spec.maximumBlockSize = samplesPerBlock;
         spec.numChannels = numChannels;
         spec.sampleRate = sampleRate;
-        
+
         if (dryCompensationDelay)
         {
             dryWet = std::make_unique<juce::dsp::DryWetMixer<float>> (samplesPerBlock * 3.0 + initLatency);
@@ -61,7 +61,7 @@ public:
 
         pitchSmoothing.setTargetValue (powf (2.0, pitchParam / 12)); // Convert semitone value into pitch scale value.
         auto newPitch = pitchSmoothing.skip (buffer.getNumSamples());
-        
+
         if (oldPitch != newPitch)
         {
             // st->setPitch(newPitch);
@@ -95,7 +95,7 @@ public:
                             timeSmoothing.setTargetValue (1.0);
                         else
                             timeSmoothing.setTargetValue (1.0);
-                        
+
                         rubberband->setTimeRatio (timeSmoothing.skip ((int) reqSamples));
                         rubberband->process (input.readPointerArray ((int) reqSamples), reqSamples, false); // Process stored input samples.
                     }
@@ -132,7 +132,7 @@ public:
             mixSmoothing.setTargetValue (0.0);
         else
             mixSmoothing.setTargetValue (mixParam / 100.0);
-        
+
         dryWet->setWetMixProportion (mixSmoothing.skip (buffer.getNumSamples()));
         dryWet->mixWetSamples (buffer);
     }
@@ -176,7 +176,7 @@ private:
 
     std::unique_ptr<RubberBand::RubberBandStretcher> rubberband;
     RingBufferMine input, output;
-    
+
     int maxSamples, initLatency, bufferFail, smallestAcceptableSize, largestAcceptableSize;
     float oldPitch, pitchParam, mixParam { 100.0f };
     std::unique_ptr<juce::dsp::DryWetMixer<float>> dryWet;

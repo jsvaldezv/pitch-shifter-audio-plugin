@@ -71,11 +71,11 @@ void PitchShifterAudioProcessor::changeProgramName (int /*index*/, const juce::S
 void PitchShifterAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
     int numChannels = getTotalNumOutputChannels();
-    
+
     // Pitch Rubberband
     rubberbandPitchShifter = std::make_unique<RubberbandPitchShifter> (getTotalNumOutputChannels(), sampleRate, samplesPerBlock, true, true);
     rubberbandPitchShifter->setMixPercentage (100.0f);
-    
+
     // Pitch Wub Vocoder
     int minWindowLength = 16 * samplesPerBlock;
     int order = 0;
@@ -87,15 +87,19 @@ void PitchShifterAudioProcessor::prepareToPlay (double sampleRate, int samplesPe
     }
 
     wubVocoderPitchShifter.resize ((size_t) numChannels);
-    
+
     for (size_t ch = 0; ch < (size_t) numChannels; ch++)
     {
         wubVocoderPitchShifter[ch] = std::unique_ptr<WubVocoderPitchShifter> (new WubVocoderPitchShifter);
         wubVocoderPitchShifter[ch]->init (order);
     }
-    
+
     // McPherson
     mcPhersonPitchShifter.preparePitch (sampleRate, numChannels);
+
+    // Dysomni
+    for (int ch = 0; ch < numChannels; ch++)
+        dysomniPitchShifter[ch].setFs ((float) sampleRate);
 }
 
 void PitchShifterAudioProcessor::releaseResources() {}
@@ -139,11 +143,23 @@ void PitchShifterAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
 
         case Algorithm::WubVocoder:
             for (size_t ch = 0; ch < (size_t) buffer.getNumChannels(); ch++)
-                wubVocoderPitchShifter[ch]->step (buffer.getWritePointer((int) ch), numSamples, shifterHopSize);
+                wubVocoderPitchShifter[ch]->step (buffer.getWritePointer ((int) ch), numSamples, wubShifterHopSize);
             break;
-            
+
         case Algorithm::McPherson:
             mcPhersonPitchShifter.processPitchShifting (buffer, currentSemitones);
+            break;
+
+        case Algorithm::Dysomni:
+            for (int channel = 0; channel < buffer.getNumChannels(); channel++)
+            {
+                for (int i = 0; i < buffer.getNumSamples(); i++)
+                {
+                    float sample = buffer.getSample (channel, i);
+                    float out = dysomniPitchShifter[channel].processSample (sample);
+                    buffer.setSample (channel, i, out);
+                }
+            }
             break;
     }
 }
@@ -153,7 +169,11 @@ void PitchShifterAudioProcessor::updateParameters()
     currentSemitones = apvts.getRawParameterValue (Semitones)->load();
 
     rubberbandPitchShifter->setSemitoneShift (currentSemitones);
-    shifterHopSize = std::pow (2.0f, currentSemitones / 12.0f);
+
+    wubShifterHopSize = std::pow (2.0f, currentSemitones / 12.0f);
+
+    for (int channel = 0; channel < getTotalNumOutputChannels(); channel++)
+        dysomniPitchShifter[channel].setPitch (currentSemitones);
 }
 
 bool PitchShifterAudioProcessor::hasEditor() const

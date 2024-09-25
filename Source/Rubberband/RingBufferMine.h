@@ -37,7 +37,7 @@ public:
 
         if (++readPos[channel] >= buffer.getNumSamples())
             readPos[channel] = 0;
-        
+
         return sample;
     }
 

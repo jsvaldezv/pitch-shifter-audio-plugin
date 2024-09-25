@@ -76,6 +76,6 @@ private:
 
     // Smoothed value for pitch
     juce::LinearSmoothedValue<float> paramShift { 0.0f };
-    
+
     float PI_VALUE = juce::MathConstants<float>::pi;
 };
