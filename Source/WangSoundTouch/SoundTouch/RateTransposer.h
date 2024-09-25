@@ -1,10 +1,10 @@
 ////////////////////////////////////////////////////////////////////////////////
-/// 
-/// Sample rate transposer. Changes sample rate by using linear interpolation 
+///
+/// Sample rate transposer. Changes sample rate by using linear interpolation
 /// together with anti-alias filtering (first order interpolation with anti-
 /// alias filtering should be quite adequate for this application).
 ///
-/// Use either of the derived classes of 'RateTransposerInteger' or 
+/// Use either of the derived classes of 'RateTransposerInteger' or
 /// 'RateTransposerFloat' for corresponding integer/floating point tranposing
 /// algorithm implementation.
 ///
@@ -38,133 +38,134 @@
 #ifndef RateTransposer_H
 #define RateTransposer_H
 
-#include <stddef.h>
 #include "AAFilter.h"
-#include "FIFOSamplePipe.h"
 #include "FIFOSampleBuffer.h"
+#include "FIFOSamplePipe.h"
+#include <stddef.h>
 
 #include "STTypes.h"
 
 namespace soundtouch
 {
 
-/// Abstract base class for transposer implementations (linear, advanced vs integer, float etc)
-class TransposerBase
-{
-public:
-        enum ALGORITHM {
-        LINEAR = 0,
-        CUBIC,
-        SHANNON
+    /// Abstract base class for transposer implementations (linear, advanced vs integer, float etc)
+    class TransposerBase
+    {
+    public:
+
+        enum ALGORITHM
+        {
+            LINEAR = 0,
+            CUBIC,
+            SHANNON
+        };
+
+    protected:
+
+        virtual int transposeMono (SAMPLETYPE* dest,
+                                   const SAMPLETYPE* src,
+                                   int& srcSamples) = 0;
+        virtual int transposeStereo (SAMPLETYPE* dest,
+                                     const SAMPLETYPE* src,
+                                     int& srcSamples) = 0;
+        virtual int transposeMulti (SAMPLETYPE* dest,
+                                    const SAMPLETYPE* src,
+                                    int& srcSamples) = 0;
+
+        static ALGORITHM algorithm;
+
+    public:
+
+        double rate;
+        int numChannels;
+
+        TransposerBase();
+        virtual ~TransposerBase();
+
+        virtual int transpose (FIFOSampleBuffer& dest, FIFOSampleBuffer& src);
+        virtual void setRate (double newRate);
+        virtual void setChannels (int channels);
+        virtual int getLatency() const = 0;
+
+        virtual void resetRegisters() = 0;
+
+        // static factory function
+        static TransposerBase* newInstance();
+
+        // static function to set interpolation algorithm
+        static void setAlgorithm (ALGORITHM a);
     };
 
-protected:
-    virtual int transposeMono(SAMPLETYPE *dest, 
-                        const SAMPLETYPE *src, 
-                        int &srcSamples)  = 0;
-    virtual int transposeStereo(SAMPLETYPE *dest, 
-                        const SAMPLETYPE *src, 
-                        int &srcSamples) = 0;
-    virtual int transposeMulti(SAMPLETYPE *dest, 
-                        const SAMPLETYPE *src, 
-                        int &srcSamples) = 0;
+    /// A common linear samplerate transposer class.
+    ///
+    class RateTransposer : public FIFOProcessor
+    {
+    protected:
 
-    static ALGORITHM algorithm;
+        /// Anti-alias filter object
+        AAFilter* pAAFilter;
+        TransposerBase* pTransposer;
 
-public:
-    double rate;
-    int numChannels;
+        /// Buffer for collecting samples to feed the anti-alias filter between
+        /// two batches
+        FIFOSampleBuffer inputBuffer;
 
-    TransposerBase();
-    virtual ~TransposerBase();
+        /// Buffer for keeping samples between transposing & anti-alias filter
+        FIFOSampleBuffer midBuffer;
 
-    virtual int transpose(FIFOSampleBuffer &dest, FIFOSampleBuffer &src);
-    virtual void setRate(double newRate);
-    virtual void setChannels(int channels);
-    virtual int getLatency() const = 0;
+        /// Output sample buffer
+        FIFOSampleBuffer outputBuffer;
 
-    virtual void resetRegisters() = 0;
+        float* leftVCBuffer;
 
-    // static factory function
-    static TransposerBase *newInstance();
+        float* rightVCBuffer;
 
-    // static function to set interpolation algorithm
-    static void setAlgorithm(ALGORITHM a);
-};
+        bool bUseAAFilter;
 
+        /// Transposes sample rate by applying anti-alias filter to prevent folding.
+        /// Returns amount of samples returned in the "dest" buffer.
+        /// The maximum amount of samples that can be returned at a time is set by
+        /// the 'set_returnBuffer_size' function.
+        void processSamples (const SAMPLETYPE* src,
+                             uint numSamples);
 
-/// A common linear samplerate transposer class.
-///
-class RateTransposer : public FIFOProcessor
-{
-protected:
-    /// Anti-alias filter object
-    AAFilter *pAAFilter;
-    TransposerBase *pTransposer;
+    public:
 
-    /// Buffer for collecting samples to feed the anti-alias filter between
-    /// two batches
-    FIFOSampleBuffer inputBuffer;
+        RateTransposer();
+        virtual ~RateTransposer();
 
-    /// Buffer for keeping samples between transposing & anti-alias filter
-    FIFOSampleBuffer midBuffer;
+        /// Returns the output buffer object
+        FIFOSamplePipe* getOutput() { return &outputBuffer; };
 
-    /// Output sample buffer
-    FIFOSampleBuffer outputBuffer;
+        /// Return anti-alias filter object
+        AAFilter* getAAFilter();
 
-    float* leftVCBuffer;
+        /// Enables/disables the anti-alias filter. Zero to disable, nonzero to enable
+        void enableAAFilter (bool newMode);
 
-    float* rightVCBuffer;
+        /// Returns nonzero if anti-alias filter is enabled.
+        bool isAAFilterEnabled() const;
 
-    bool bUseAAFilter;
+        /// Sets new target rate. Normal rate = 1.0, smaller values represent slower
+        /// rate, larger faster rates.
+        virtual void setRate (double newRate);
 
+        /// Sets the number of channels, 1 = mono, 2 = stereo
+        void setChannels (int channels);
 
-    /// Transposes sample rate by applying anti-alias filter to prevent folding. 
-    /// Returns amount of samples returned in the "dest" buffer.
-    /// The maximum amount of samples that can be returned at a time is set by
-    /// the 'set_returnBuffer_size' function.
-    void processSamples(const SAMPLETYPE *src, 
-                        uint numSamples);
+        /// Adds 'numSamples' pcs of samples from the 'samples' memory position into
+        /// the input of the object.
+        void putSamples (const SAMPLETYPE* samples, uint numSamples);
 
-public:
-    RateTransposer();
-    virtual ~RateTransposer();
+        /// Clears all the samples in the object
+        void clear();
 
-    /// Returns the output buffer object
-    FIFOSamplePipe *getOutput() { return &outputBuffer; };
+        /// Returns nonzero if there aren't any samples available for outputting.
+        int isEmpty() const;
 
-    /// Return anti-alias filter object
-    AAFilter *getAAFilter();
-
-    /// Enables/disables the anti-alias filter. Zero to disable, nonzero to enable
-    void enableAAFilter(bool newMode);
-
-    /// Returns nonzero if anti-alias filter is enabled.
-    bool isAAFilterEnabled() const;
-
-    /// Sets new target rate. Normal rate = 1.0, smaller values represent slower 
-    /// rate, larger faster rates.
-    virtual void setRate(double newRate);
-
-    /// Sets the number of channels, 1 = mono, 2 = stereo
-    void setChannels(int channels);
-
-    /// Adds 'numSamples' pcs of samples from the 'samples' memory position into
-    /// the input of the object.
-    void putSamples(const SAMPLETYPE *samples, uint numSamples);
-
-    /// Clears all the samples in the object
-    void clear();
-
-    /// Returns nonzero if there aren't any samples available for outputting.
-    int isEmpty() const;
-
-    /// Return approximate initial input-output latency
-    int getLatency() const;
-
-
-
-};
+        /// Return approximate initial input-output latency
+        int getLatency() const;
+    };
 
 }
 

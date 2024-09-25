@@ -77,13 +77,14 @@ void PitchShifterAudioProcessor::prepareToPlay (double sampleRate, int samplesPe
 
     wangPitchShifter.prepare (spec, true, true);
     wangSoundTouchPitchShifter.prepare (spec, true, true);
+    wangVocoder.prepare (spec);
     wubPitchShifter.prepare (spec);
     mcPhersonPitchShifter.prepare (spec);
     dysomniPitchShifter.prepare (spec);
 
     juriHockPitchShifter.prepare (spec);
     setLatencySamples (juriHockPitchShifter.getLatency());
-    
+
     // Townley
     //townleyPitchShifter.prepare (spec);
 }
@@ -125,10 +126,13 @@ void PitchShifterAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
         case Algorithm::WangRubberband:
             wangPitchShifter.process (buffer);
             break;
-            
+
         case Algorithm::WangSoundTouch:
             wangSoundTouchPitchShifter.process (buffer);
             break;
+            
+        case Algorithm::WangVocoder:
+            wangVocoder.process (buffer);
 
         case Algorithm::WubVocoder:
             wubPitchShifter.process (buffer);
@@ -150,7 +154,7 @@ void PitchShifterAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
 
             break;
     }
-    
+
     //townleyPitchShifter.process (buffer);
 }
 
@@ -159,7 +163,7 @@ void PitchShifterAudioProcessor::updateParameters()
     currentSemitones = (int) apvts.getRawParameterValue (Semitones)->load();
 
     wangPitchShifter.setSemitones (currentSemitones);
-    
+
     wangSoundTouchPitchShifter.setSemitones (currentSemitones);
 
     wubPitchShifter.setSemitones (currentSemitones);

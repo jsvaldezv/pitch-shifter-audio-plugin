@@ -4,14 +4,14 @@
 class RingBufferForST
 {
 public:
-    
+
     RingBufferForST() {}
     ~RingBufferForST() {}
 
-    void initialise(int numChannels, int numSamples)
+    void initialise (int numChannels, int numSamples)
     {
-        readPos.resize(numChannels);
-        writePos.resize(numChannels);
+        readPos.resize (numChannels);
+        writePos.resize (numChannels);
 
         for (int i = 0; i < readPos.size(); i++)
         {
@@ -19,13 +19,13 @@ public:
             writePos[i] = 0.0;
         }
 
-        buffer.setSize(numChannels, numSamples);
-        pointerBuffer.resize(numChannels * numSamples);
+        buffer.setSize (numChannels, numSamples);
+        pointerBuffer.resize (numChannels * numSamples);
     }
 
-    void pushSample(float sample, int channel)
+    void pushSample (float sample, int channel)
     {
-        buffer.setSample(channel, writePos[channel], sample);
+        buffer.setSample (channel, writePos[channel], sample);
 
         if (++writePos[channel] >= buffer.getNumSamples())
         {
@@ -33,9 +33,9 @@ public:
         }
     }
 
-    float popSample(int channel)
+    float popSample (int channel)
     {
-        auto sample = buffer.getSample(channel, readPos[channel]);
+        auto sample = buffer.getSample (channel, readPos[channel]);
 
         if (++readPos[channel] >= buffer.getNumSamples())
         {
@@ -44,7 +44,7 @@ public:
         return sample;
     }
 
-    int getAvailableSampleNum(int channel)
+    int getAvailableSampleNum (int channel)
     {
         if (readPos[channel] <= writePos[channel])
         {
@@ -56,21 +56,20 @@ public:
         }
     }
 
-    const float* readPointerArray(int reqSamples)
+    const float* readPointerArray (int reqSamples)
     {
         for (int samplePos = 0; samplePos < reqSamples; samplePos++)
         {
-
             for (int channel = 0; channel < buffer.getNumChannels(); channel++)
             {
-                pointerBuffer[samplePos * 2 + channel] = popSample(channel);
+                pointerBuffer[samplePos * 2 + channel] = popSample (channel);
                 // pointerBuffer.setSample(channel, samplePos, popSample(channel));
             }
         }
-        return pointerBuffer.data();// pointerBuffer.getArrayOfReadPointers();
+        return pointerBuffer.data(); // pointerBuffer.getArrayOfReadPointers();
     }
 
-    void writePointerArray(float* ptrBegin, int writeNum)
+    void writePointerArray (float* ptrBegin, int writeNum)
     {
         for (int i = 0; i < writeNum * 2; i++)
         {
@@ -79,24 +78,24 @@ public:
         }
     }
 
-        //return pointerBuffer.data();
-    
-    
-    void copyToBuffer(int numSamples)
+    //return pointerBuffer.data();
+
+    void copyToBuffer (int numSamples)
     {
         for (int channel = 0; channel < buffer.getNumChannels(); channel++)
         {
             for (int sample = 0; sample < numSamples; sample++)
             {
-                pushSample(pointerBuffer[sample * 2 + channel], channel);
+                pushSample (pointerBuffer[sample * 2 + channel], channel);
                 // pushSample(pointerBuffer.getSample(channel, sample), channel);
             }
         }
     }
 
 private:
-    juce::AudioBuffer<float> buffer;// , pointerBuffer;
+
+    juce::AudioBuffer<float> buffer; // , pointerBuffer;
     std::vector<float> pointerBuffer;
     std::vector<int> readPos, writePos;
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(RingBufferForST)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (RingBufferForST)
 };

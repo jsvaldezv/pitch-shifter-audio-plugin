@@ -5,10 +5,11 @@ enum Algorithm
 {
     WangRubberband = 0,
     WangSoundTouch = 1,
-    WubVocoder = 2,
-    McPherson = 3,
-    Dysomni = 4,
-    JuriHock = 5,
+    WangVocoder = 2,
+    WubVocoder = 3,
+    McPherson = 4,
+    Dysomni = 5,
+    JuriHock = 6,
 };
 
 static const juce::String Semitones = "Semitones";
@@ -16,6 +17,7 @@ static const juce::String Semitones = "Semitones";
 static const juce::String Algorithm = "Algorithm";
 static const juce::String WangRubberband_Algorithm = "WangRubberband";
 static const juce::String WangSoundTouch_Algorithm = "WangSoundTouch";
+static const juce::String WangVocoder_Algorithm = "WangVocoder";
 static const juce::String WubVocoder_Algorithm = "WubVocoder";
 static const juce::String McPherson_Algorithm = "McPherson";
 static const juce::String Dysomni_Algorithm = "Dysomni";
@@ -23,6 +25,7 @@ static const juce::String JuriHock_Algorithm = "JuriHock";
 
 static const juce::StringArray AlgorithmList (WangRubberband_Algorithm,
                                               WangSoundTouch_Algorithm,
+                                              WangVocoder_Algorithm,
                                               WubVocoder_Algorithm,
                                               McPherson_Algorithm,
                                               Dysomni_Algorithm,
