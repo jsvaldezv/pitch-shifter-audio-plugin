@@ -96,6 +96,7 @@ target_link_libraries(${PROJECT_NAME}
     Assets
     ${JUCE_DEPENDENCIES}
     RubberBand
+    stftpitchshift
     PUBLIC
     juce::juce_recommended_config_flags
     juce::juce_recommended_lto_flags

@@ -1,3 +1,6 @@
 [submodule "Libraries/JUCE"]
 	path = Libraries/JUCE
 	url = https://github.com/juce-framework/JUCE
+[submodule "Libraries/stftPitchShift"]
+	path = Libraries/stftPitchShift
+	url = https://github.com/jurihock/stftPitchShift

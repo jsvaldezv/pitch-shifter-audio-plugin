@@ -71,7 +71,7 @@ void PitchShifterAudioProcessor::changeProgramName (int /*index*/, const juce::S
 void PitchShifterAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
     int numChannels = getTotalNumOutputChannels();
-    
+
     juce::dsp::ProcessSpec spec;
     spec.maximumBlockSize = (juce::uint32) samplesPerBlock;
     spec.numChannels = (juce::uint32) getTotalNumOutputChannels();
@@ -105,9 +105,13 @@ void PitchShifterAudioProcessor::prepareToPlay (double sampleRate, int samplesPe
     // Dysomni
     for (int ch = 0; ch < numChannels; ch++)
         dysomniPitchShifter[ch].setFs ((float) sampleRate);
-    
+
     // Townley
     //townleyPitchShifter.prepare (spec);
+
+    // Juro Hock
+    juriHockPitchShifter.prepare (spec);
+    setLatencySamples (juriHockPitchShifter.getLatency());
 }
 
 void PitchShifterAudioProcessor::releaseResources() {}
@@ -169,8 +173,15 @@ void PitchShifterAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
                 }
             }
             break;
+
+        case Algorithm::JuriHock:
+            juriHockPitchShifter.process (buffer);
+
+            if (juriHockPitchShifter.latencyChanged)
+                setLatencySamples (juriHockPitchShifter.getLatency());
+            break;
     }
-    
+
     //townleyPitchShifter.process (buffer);
 }
 
@@ -184,8 +195,10 @@ void PitchShifterAudioProcessor::updateParameters()
 
     for (int channel = 0; channel < getTotalNumOutputChannels(); channel++)
         dysomniPitchShifter[channel].setPitch (currentSemitones);
-    
+
     //townleyPitchShifter.setSemitones (currentSemitones);
+
+    juriHockPitchShifter.setSemitones (currentSemitones);
 }
 
 bool PitchShifterAudioProcessor::hasEditor() const
