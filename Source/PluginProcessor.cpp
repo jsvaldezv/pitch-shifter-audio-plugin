@@ -70,48 +70,21 @@ void PitchShifterAudioProcessor::changeProgramName (int /*index*/, const juce::S
 
 void PitchShifterAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
-    int numChannels = getTotalNumOutputChannels();
-
     juce::dsp::ProcessSpec spec;
     spec.maximumBlockSize = (juce::uint32) samplesPerBlock;
     spec.numChannels = (juce::uint32) getTotalNumOutputChannels();
     spec.sampleRate = sampleRate;
 
-    // Pitch Rubberband
-    rubberbandPitchShifter = std::make_unique<RubberbandPitchShifter> (getTotalNumOutputChannels(), sampleRate, samplesPerBlock, true, true);
-    rubberbandPitchShifter->setMixPercentage (100.0f);
+    rubberbandPitchShifter.prepare (spec, true, true);
+    wubPitchShifter.prepare (spec);
+    mcPhersonPitchShifter.prepare (spec);
+    dysomniPitchShifter.prepare (spec);
 
-    // Pitch Wub Vocoder
-    int minWindowLength = 16 * samplesPerBlock;
-    int order = 0;
-    int windowLength = 1;
-    while (windowLength < minWindowLength)
-    {
-        order++;
-        windowLength *= 2;
-    }
-
-    wubVocoderPitchShifter.resize ((size_t) numChannels);
-
-    for (size_t ch = 0; ch < (size_t) numChannels; ch++)
-    {
-        wubVocoderPitchShifter[ch] = std::unique_ptr<WubVocoderPitchShifter> (new WubVocoderPitchShifter);
-        wubVocoderPitchShifter[ch]->init (order);
-    }
-
-    // McPherson
-    mcPhersonPitchShifter.preparePitch ((int) spec.sampleRate, (int) spec.numChannels);
-
-    // Dysomni
-    for (int ch = 0; ch < numChannels; ch++)
-        dysomniPitchShifter[ch].setFs ((float) sampleRate);
+    juriHockPitchShifter.prepare (spec);
+    setLatencySamples (juriHockPitchShifter.getLatency());
 
     // Townley
     //townleyPitchShifter.prepare (spec);
-
-    // Juro Hock
-    juriHockPitchShifter.prepare (spec);
-    setLatencySamples (juriHockPitchShifter.getLatency());
 }
 
 void PitchShifterAudioProcessor::releaseResources() {}
@@ -144,34 +117,24 @@ void PitchShifterAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
         buffer.clear (i, 0, buffer.getNumSamples());
 
-    int numSamples = buffer.getNumSamples();
     updateParameters();
 
     switch ((int) apvts.getRawParameterValue (Algorithm)->load())
     {
         case Algorithm::Rubberband:
-            rubberbandPitchShifter->processBuffer (buffer);
+            rubberbandPitchShifter.process (buffer);
             break;
 
         case Algorithm::WubVocoder:
-            for (size_t ch = 0; ch < (size_t) buffer.getNumChannels(); ch++)
-                wubVocoderPitchShifter[ch]->step (buffer.getWritePointer ((int) ch), numSamples, wubShifterHopSize);
+            wubPitchShifter.process (buffer);
             break;
 
         case Algorithm::McPherson:
-            mcPhersonPitchShifter.processPitchShifting (buffer, currentSemitones);
+            mcPhersonPitchShifter.process (buffer);
             break;
 
         case Algorithm::Dysomni:
-            for (int channel = 0; channel < buffer.getNumChannels(); channel++)
-            {
-                for (int i = 0; i < buffer.getNumSamples(); i++)
-                {
-                    float sample = buffer.getSample (channel, i);
-                    float out = dysomniPitchShifter[channel].processSample (sample);
-                    buffer.setSample (channel, i, out);
-                }
-            }
+            dysomniPitchShifter.process (buffer);
             break;
 
         case Algorithm::JuriHock:
@@ -179,6 +142,7 @@ void PitchShifterAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
 
             if (juriHockPitchShifter.latencyChanged)
                 setLatencySamples (juriHockPitchShifter.getLatency());
+
             break;
     }
 
@@ -187,18 +151,19 @@ void PitchShifterAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
 
 void PitchShifterAudioProcessor::updateParameters()
 {
-    currentSemitones = apvts.getRawParameterValue (Semitones)->load();
+    currentSemitones = (int) apvts.getRawParameterValue (Semitones)->load();
 
-    rubberbandPitchShifter->setSemitoneShift (currentSemitones);
+    rubberbandPitchShifter.setSemitones (currentSemitones);
 
-    wubShifterHopSize = std::pow (2.0f, currentSemitones / 12.0f);
+    wubPitchShifter.setSemitones (currentSemitones);
 
-    for (int channel = 0; channel < getTotalNumOutputChannels(); channel++)
-        dysomniPitchShifter[channel].setPitch (currentSemitones);
+    mcPhersonPitchShifter.setSemitones (currentSemitones);
+
+    dysomniPitchShifter.setSemitones (currentSemitones);
+    
+    juriHockPitchShifter.setSemitones (currentSemitones);
 
     //townleyPitchShifter.setSemitones (currentSemitones);
-
-    juriHockPitchShifter.setSemitones (currentSemitones);
 }
 
 bool PitchShifterAudioProcessor::hasEditor() const

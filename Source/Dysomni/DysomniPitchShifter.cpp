@@ -1,158 +1,28 @@
 #include "DysomniPitchShifter.h"
 
-DysomniPitchShifter::DysomniPitchShifter()
+void DysomniPitchShifter::prepare (juce::dsp::ProcessSpec& sp)
 {
+    spec = sp;
+
+    for (size_t ch = 0; ch < spec.numChannels; ch++)
+        pitchShifter[ch].setFs ((float) spec.sampleRate);
 }
 
-// Destructor
-DysomniPitchShifter::~DysomniPitchShifter()
+void DysomniPitchShifter::process (juce::AudioBuffer<float>& buffer)
 {
-}
-
-float DysomniPitchShifter::processSample (float x)
-{
-    x = x * changeGain;
-    float x1 = pitchDelay1.processSample (x, a1);
-    float x2 = pitchDelay2.processSample (x, a2);
-    float x3 = pitchDelay3.processSample (x, a3);
-
-    float g1 = calcGain (a1);
-    float g2 = calcGain (a2);
-    float g3 = calcGain (a3);
-
-    validateAngleBounds (a1);
-    validateAngleBounds (a2);
-    validateAngleBounds (a3);
-
-    validateChange (true);
-
-    return (g1 * x1 + g2 * x2 + g3 * x3) * (2.f / 3.f) * changeGain;
-}
-
-float DysomniPitchShifter::kindaProcessSample (float x)
-{
-    x = x * changeGain;
-
-    float x1 = pitchDelay1.processSample (x, a1);
-    float x2 = pitchDelay2.processSample (x, a2);
-    float x3 = pitchDelay3.processSample (x, a3);
-
-    float g1 = calcGain (a1);
-    float g2 = calcGain (a2);
-    float g3 = calcGain (a3);
-
-    validateAngleBounds (a1);
-    validateAngleBounds (a2);
-    validateAngleBounds (a3);
-
-    validateChange (false);
-
-    return (g1 * x1 + g2 * x2 + g3 * x3) * (2.f / 3.f) * changeGain;
-}
-
-void DysomniPitchShifter::validateChange (bool on)
-{
-    if (! on)
+    for (int channel = 0; channel < buffer.getNumChannels(); channel++)
     {
-        if (changeGain == 0.f && changeGainInc == 0.f)
-            return;
-        changeGainInc = -GAIN_CHANGE_SPEED;
-        changeGain += changeGainInc;
-        if (changeGain <= 0.f)
+        for (int i = 0; i < buffer.getNumSamples(); i++)
         {
-            changeGain = 0.f;
-            changeGainInc = 0.f;
-        }
-    }
-    else
-    {
-        if (changeGainInc < 0)
-        {
-            changeGain += changeGainInc;
-            if (changeGain <= 0.f)
-            {
-                changeGain = 0.f;
-                changeGainInc = GAIN_CHANGE_SPEED;
-                actualSetPitch (pitchBuffer);
-            }
-        }
-        else if (changeGainInc > 0)
-        {
-            changeGain += changeGainInc;
-            if (changeGain >= 1.f)
-            {
-                changeGain = 1.f;
-                changeGainInc = 0.f;
-            }
-        }
-        else if (changeGainInc == 0.f)
-        {
-            if (changeGain == 0.f)
-            {
-                changeGainInc = GAIN_CHANGE_SPEED;
-                changeGain += changeGainInc;
-            }
+            float sample = buffer.getSample (channel, i);
+            float out = pitchShifter[channel].processSample (sample);
+            buffer.setSample (channel, i, out);
         }
     }
 }
 
-void DysomniPitchShifter::setFs (float Fs)
+void DysomniPitchShifter::setSemitones (int semitones)
 {
-    this->Fs = Fs;
-    pitchDelay1.setFs (Fs);
-    pitchDelay2.setFs (Fs);
-    pitchDelay3.setFs (Fs);
-
-    calcAngleChange();
-}
-
-void DysomniPitchShifter::setPitch (float semitone)
-{
-    if (this->semitone == semitone)
-        return;
-    pitchBuffer = semitone;
-    changeGainInc = -GAIN_CHANGE_SPEED;
-}
-
-void DysomniPitchShifter::actualSetPitch (float semitone)
-{
-    this->semitone = semitone;
-
-    calcDelta();
-    calcAngleChange();
-
-    pitchDelay1.setPitch (semitone);
-    pitchDelay2.setPitch (semitone);
-    pitchDelay3.setPitch (semitone);
-}
-
-void DysomniPitchShifter::calcDelta()
-{
-    tr = powf (2.f, semitone / 12.f);
-    delta = 1.f - tr;
-}
-
-void DysomniPitchShifter::calcAngleChange()
-{
-    freq = 1.f / ((MAX_DELAY_SAMPLES - 1.f) / (delta * Fs));
-    angleChange = freq * M2_PI / Fs;
-}
-
-float DysomniPitchShifter::calcGain (float& angle)
-{
-    return 0.5f * sin (angle) + 0.5f;
-}
-
-void DysomniPitchShifter::validateAngleBounds (float& angle)
-{
-    angle += angleChange;
-
-    if (angle > M2_PI)
-    {
-        angle -= M2_PI;
-    }
-    else if (angle < 0.f)
-    {
-        angle += M2_PI;
-    }
+    for (size_t channel = 0; channel < spec.numChannels; channel++)
+        pitchShifter[channel].setPitch (semitones);
 }

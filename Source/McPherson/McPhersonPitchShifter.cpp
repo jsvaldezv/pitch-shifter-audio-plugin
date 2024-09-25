@@ -1,11 +1,11 @@
 #include "McPhersonPitchShifter.h"
 
-void McPhersonPitchShifter::preparePitch (double inSampleRate, int inNumChannels)
+void McPhersonPitchShifter::prepare (juce::dsp::ProcessSpec& spec)
 {
     const double smoothTime = 1e-3;
-    paramShift.reset (inSampleRate, smoothTime);
+    paramShift.reset (spec.sampleRate, smoothTime);
 
-    updateFftSize (inNumChannels);
+    updateFftSize ((int) spec.numChannels);
     updateHopSize();
     updateAnalysisWindow();
     updateWindowScaleFactor();
@@ -13,10 +13,8 @@ void McPhersonPitchShifter::preparePitch (double inSampleRate, int inNumChannels
     needToResetPhases = true;
 }
 
-void McPhersonPitchShifter::processPitchShifting (juce::AudioSampleBuffer& inBuffer, float inSemitone)
+void McPhersonPitchShifter::process (juce::AudioBuffer<float>& inBuffer)
 {
-    paramShift.setTargetValue (getScaleSemitone (inSemitone));
-
     int currentInputBufferWritePosition = 0;
     int currentOutputBufferWritePosition = 0;
     int currentOutputBufferReadPosition = 0;
@@ -134,6 +132,11 @@ void McPhersonPitchShifter::processPitchShifting (juce::AudioSampleBuffer& inBuf
     outputBufferWritePosition = currentOutputBufferWritePosition;
     outputBufferReadPosition = currentOutputBufferReadPosition;
     samplesSinceLastFFT = currentSamplesSinceLastFFT;
+}
+
+void McPhersonPitchShifter::setSemitones (int semitone)
+{
+    paramShift.setTargetValue (getScaleSemitone (semitone));
 }
 
 void McPhersonPitchShifter::updateFftSize (int inNumChannels)

@@ -5,7 +5,7 @@
 #include "Parameters.h"
 #include "Rubberband/RubberBandPitchShifter.h"
 #include "Townley/TownleyPitchShifter.h"
-#include "WubVocoder/PitchShifter.h"
+#include "WubVocoder/WubPitchShifter.h"
 #include <JuceHeader.h>
 
 class PitchShifterAudioProcessor : public juce::AudioProcessor
@@ -44,21 +44,21 @@ private:
 
     void updateParameters();
 
-    float currentSemitones { 0.0f };
+    int currentSemitones { 0 };
 
-    std::unique_ptr<RubberbandPitchShifter> rubberbandPitchShifter;
+    // Algorithms
+    RubberbandPitchShifter rubberbandPitchShifter; // https://github.com/wangchengzhong/Voice-Changer/blob/master/Source/PitchShifterRubberband.h
 
-    std::vector<std::unique_ptr<WubVocoderPitchShifter>> wubVocoderPitchShifter; // https://github.com/professorwub/pitchshifter
-    float wubShifterHopSize { 0.0f };
+    WubPitchShifter wubPitchShifter; // https://github.com/professorwub/pitchshifter
 
     McPhersonPitchShifter mcPhersonPitchShifter; // https://github.com/juandagilc/Audio-Effects
 
-    DysomniPitchShifter dysomniPitchShifter[2]; // https://github.com/dysomni/Harmonizer
+    DysomniPitchShifter dysomniPitchShifter; // https://github.com/dysomni/Harmonizer
+    
+    StftPitchShifter juriHockPitchShifter; // https://github.com/jurihock/stftPitchShiftPlugin
 
     // Pending...
     //TownleyPitchShifter townleyPitchShifter; // https://github.com/MartinTownley/JUCE_VDL_Pitch-Shifter
-
-    StftPitchShifter juriHockPitchShifter; // https://github.com/jurihock/stftPitchShiftPlugin
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PitchShifterAudioProcessor)
 };

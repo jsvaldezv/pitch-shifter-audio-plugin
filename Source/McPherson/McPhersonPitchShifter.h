@@ -8,14 +8,16 @@ public:
     McPhersonPitchShifter() = default;
     ~McPhersonPitchShifter() = default;
 
-    void preparePitch (double inSampleRate, int inNumChannels);
+    void prepare (juce::dsp::ProcessSpec&);
 
     float getScaleSemitone (float inValue)
     {
         return powf (2.0f, inValue / 12.0f);
     }
 
-    void processPitchShifting (juce::AudioSampleBuffer& inBuffer, float inSemitone);
+    void process (juce::AudioBuffer<float>& inBuffer);
+
+    void setSemitones (int semitone);
 
     void updateFftSize (int inNumChannels);
 
