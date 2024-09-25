@@ -1,12 +1,12 @@
-#include "Shifter.h"
+#include "PitchShifter.h"
 
-SHIFTER::SHIFTER()
+WubVocoderPitchShifter::WubVocoderPitchShifter()
 {
     windowlength = 1;
     firsttime = true;
 }
 
-void SHIFTER::init (int order)
+void WubVocoderPitchShifter::init (int order)
 {
     stft.init (order);
     istft.init (order);
@@ -20,7 +20,7 @@ void SHIFTER::init (int order)
     firsttime = true;
 }
 
-void SHIFTER::step (float* samples, int numsamples, float hopratio)
+void WubVocoderPitchShifter::step (float* samples, int numsamples, float hopratio)
 {
     // Calculate STFT
     stft.step (samples, numsamples, fftdata.data());

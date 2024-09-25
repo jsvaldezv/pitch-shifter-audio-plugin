@@ -16,12 +16,12 @@ inline void PVresample (float* x, int Nx, float* y, int Ny)
     }
 }
 
-class SHIFTER
+class WubVocoderPitchShifter
 {
 public:
 
-    SHIFTER();
-    ~SHIFTER() {}
+    WubVocoderPitchShifter();
+    ~WubVocoderPitchShifter() {}
 
     void init (int);
     void step (float*, int, float);

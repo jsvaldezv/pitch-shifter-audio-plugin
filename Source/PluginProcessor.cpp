@@ -73,10 +73,10 @@ void PitchShifterAudioProcessor::prepareToPlay (double sampleRate, int samplesPe
     int numChannels = getTotalNumOutputChannels();
     
     // Pitch Rubberband
-    pitchShifterRubberband = std::make_unique<PitchShifterRubberband> (getTotalNumOutputChannels(), sampleRate, samplesPerBlock, true, true);
-    pitchShifterRubberband->setMixPercentage (100.0f);
+    rubberbandPitchShifter = std::make_unique<RubberbandPitchShifter> (getTotalNumOutputChannels(), sampleRate, samplesPerBlock, true, true);
+    rubberbandPitchShifter->setMixPercentage (100.0f);
     
-    // Pitch phase vocoder
+    // Pitch Wub Vocoder
     int minWindowLength = 16 * samplesPerBlock;
     int order = 0;
     int windowLength = 1;
@@ -86,13 +86,16 @@ void PitchShifterAudioProcessor::prepareToPlay (double sampleRate, int samplesPe
         windowLength *= 2;
     }
 
-    shifterBank.resize ((size_t) numChannels);
+    wubVocoderPitchShifter.resize ((size_t) numChannels);
     
     for (size_t ch = 0; ch < (size_t) numChannels; ch++)
     {
-        shifterBank[ch] = std::unique_ptr<SHIFTER> (new SHIFTER);
-        shifterBank[ch]->init (order);
+        wubVocoderPitchShifter[ch] = std::unique_ptr<WubVocoderPitchShifter> (new WubVocoderPitchShifter);
+        wubVocoderPitchShifter[ch]->init (order);
     }
+    
+    // McPherson
+    mcPhersonPitchShifter.preparePitch (sampleRate, numChannels);
 }
 
 void PitchShifterAudioProcessor::releaseResources() {}
@@ -125,27 +128,32 @@ void PitchShifterAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
         buffer.clear (i, 0, buffer.getNumSamples());
 
+    int numSamples = buffer.getNumSamples();
     updateParameters();
 
     switch ((int) apvts.getRawParameterValue (Algorithm)->load())
     {
         case Algorithm::Rubberband:
-            pitchShifterRubberband->processBuffer (buffer);
+            rubberbandPitchShifter->processBuffer (buffer);
             break;
 
-        case Algorithm::PhaseVocoder:
+        case Algorithm::WubVocoder:
             for (size_t ch = 0; ch < (size_t) buffer.getNumChannels(); ch++)
-                shifterBank[ch]->step (buffer.getWritePointer((int) ch), buffer.getNumSamples(), shifterHopSize);
+                wubVocoderPitchShifter[ch]->step (buffer.getWritePointer((int) ch), numSamples, shifterHopSize);
+            break;
+            
+        case Algorithm::McPherson:
+            mcPhersonPitchShifter.processPitchShifting (buffer, currentSemitones);
             break;
     }
 }
 
 void PitchShifterAudioProcessor::updateParameters()
 {
-    float semitones = apvts.getRawParameterValue (Semitones)->load();
+    currentSemitones = apvts.getRawParameterValue (Semitones)->load();
 
-    pitchShifterRubberband->setSemitoneShift (semitones);
-    shifterHopSize = std::pow (2.0f, semitones / 12.0f);
+    rubberbandPitchShifter->setSemitoneShift (currentSemitones);
+    shifterHopSize = std::pow (2.0f, currentSemitones / 12.0f);
 }
 
 bool PitchShifterAudioProcessor::hasEditor() const

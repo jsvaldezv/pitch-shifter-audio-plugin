@@ -3,11 +3,11 @@
 #include "RubberBandStretcher.h"
 #include <JuceHeader.h>
 
-class PitchShifterRubberband
+class RubberbandPitchShifter
 {
 public:
 
-    PitchShifterRubberband (int numChannels, double sampleRate, int samplesPerBlock, bool dryCompensationDelay = false, bool minLatency = false)
+    RubberbandPitchShifter (int numChannels, double sampleRate, int samplesPerBlock, bool dryCompensationDelay = false, bool minLatency = false)
     {
         rubberband = std::make_unique<RubberBand::RubberBandStretcher> (sampleRate, numChannels, RubberBand::RubberBandStretcher::Option::OptionProcessRealTime + RubberBand::RubberBandStretcher::Option::OptionPitchHighConsistency, 1.0, 1.0);
 
@@ -52,7 +52,7 @@ public:
         }
     }
 
-    ~PitchShifterRubberband() {}
+    ~RubberbandPitchShifter() {}
 
     /** Pitch shift a juce::AudioBuffer<float> */
     void processBuffer (juce::AudioBuffer<float>& buffer)

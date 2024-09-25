@@ -1,7 +1,8 @@
 #pragma once
 #include "Parameters.h"
 #include "Rubberband/RubberBandPitchShifter.h"
-#include "PhaseVocoder/Shifter.h"
+#include "WubVocoder/PitchShifter.h"
+#include "McPherson/McPhersonPitchShifter.h"
 #include <JuceHeader.h>
 
 class PitchShifterAudioProcessor : public juce::AudioProcessor
@@ -39,11 +40,15 @@ private:
     juce::AudioProcessorValueTreeState apvts { *this, nullptr, "Parameters", createParameters() };
 
     void updateParameters();
-
-    std::unique_ptr<PitchShifterRubberband> pitchShifterRubberband;
     
-    std::vector<std::unique_ptr<SHIFTER>> shifterBank;
+    float currentSemitones { 0.0f };
+
+    std::unique_ptr<RubberbandPitchShifter> rubberbandPitchShifter;
+    
+    std::vector<std::unique_ptr<WubVocoderPitchShifter>> wubVocoderPitchShifter; // https://github.com/professorwub/pitchshifter
     float shifterHopSize { 0.0f };
+    
+    McPhersonPitchShifter mcPhersonPitchShifter;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PitchShifterAudioProcessor)
 };
