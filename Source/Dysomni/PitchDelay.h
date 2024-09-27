@@ -10,7 +10,9 @@ public:
     ~PitchDelay() = default;
 
     float processSample (float x, float& angle);
+    
     void setFs (float Fs);
+    
     void setPitch (float semitone);
 
 private:
@@ -31,11 +33,22 @@ private:
     float semitone { 0.0f };
     float tr { 1.0f }; // momentary trasposition
     float delta { 0.0f }; // rate of change for delay (samples)
+    
+    int oldIndex = 0;      // Índice antiguo durante crossfade
+    float oldDelay = 0.0f; // Delay anterior para el crossfade
+    
+    bool crossfadeActive = false; // Indicador si el crossfade está activo
+    float crossfadePos = 0.0f;    // Progreso del crossfade (0.0 a 1.0)
+    float crossfadeStep = 0.01f;  // Tamaño del paso para el crossfade (controla la duración)
 
     void calcDelay();
     void incDelay (float& angle);
     void addToBuffer (float& sample);
+    
     float calcFractionalDelay();
+    float calcFractionalDelay (float delayValue, int bufferIndex);
+    
+    void startCrossfade();
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PitchDelay)
 };

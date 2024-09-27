@@ -8,10 +8,40 @@ PitchDelay::PitchDelay (int inPhaseChoice)
 
 float PitchDelay::processSample (float x, float& angle)
 {
-    addToBuffer (x);
+    /*addToBuffer (x);
     incDelay (angle);
 
-    return calcFractionalDelay();
+    return calcFractionalDelay();*/
+    
+    addToBuffer(x);
+    incDelay(angle);
+
+    // Si está en proceso de crossfade, aplicamos la transición
+    if (crossfadeActive)
+    {
+        float sampleA = calcFractionalDelay(oldDelay, oldIndex);
+        float sampleB = calcFractionalDelay(delay, index);
+
+        // Realizamos el crossfade entre las dos señales
+        float crossfadedSample = (1.0f - crossfadePos) * sampleA + crossfadePos * sampleB;
+
+        // Incrementamos la posición del crossfade
+        crossfadePos += crossfadeStep;
+
+        // Cuando el crossfade termina, lo desactivamos
+        if (crossfadePos >= 1.0f)
+        {
+            crossfadeActive = false;
+            crossfadePos = 0.0f;
+        }
+
+        return crossfadedSample;
+    }
+    else
+    {
+        // Procesamiento normal sin crossfade
+        return calcFractionalDelay(delay, index);
+    }
 }
 
 void PitchDelay::setFs (float inFs)
@@ -28,6 +58,9 @@ void PitchDelay::setPitch (float inSemitone)
     tr = std::powf (2.0f, semitone / 12.0f);
 
     delta = 1.0f - tr;
+    
+    // Iniciar el crossfade cuando el pitch cambia
+    startCrossfade();
 }
 
 void PitchDelay::addToBuffer (float& sample)
@@ -74,6 +107,21 @@ void PitchDelay::incDelay (float& angle)
     }
 }
 
+float PitchDelay::calcFractionalDelay (float delayValue, int bufferIndex)
+{
+    int d1 = static_cast<int>(std::floor(delayValue));
+    int d2 = (d1 + 1) % MAX_BUFFER_SIZE;
+
+    float frac = delayValue - static_cast<float>(d1);
+    float g1 = 1.0f - frac;
+    float g2 = frac;
+
+    int indexD1 = (bufferIndex - d1 + MAX_BUFFER_SIZE) % MAX_BUFFER_SIZE;
+    int indexD2 = (bufferIndex - d2 + MAX_BUFFER_SIZE) % MAX_BUFFER_SIZE;
+
+    return g1 * delayBuffer[indexD1] + g2 * delayBuffer[indexD2];
+}
+
 float PitchDelay::calcFractionalDelay()
 {
     int d1 = (int) (std::floor (delay));
@@ -91,4 +139,18 @@ float PitchDelay::calcFractionalDelay()
         indexD2 += MAX_BUFFER_SIZE;
 
     return g1 * delayBuffer[indexD1] + g2 * delayBuffer[indexD2];
+}
+
+void PitchDelay::startCrossfade()
+{
+    // Guardamos el estado actual del delay antes de cambiar
+    oldDelay = delay;
+    oldIndex = index;
+
+    // Activamos el crossfade
+    crossfadeActive = true;
+    crossfadePos = 0.0f;
+
+    // Definimos la velocidad del crossfade (aquí, 100 muestras)
+    crossfadeStep = 1.0f / 100.0f;
 }

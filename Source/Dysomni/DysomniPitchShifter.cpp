@@ -33,7 +33,12 @@ void DysomniPitchShifter::process (juce::AudioBuffer<float>& buffer)
 
 void DysomniPitchShifter::setSemitones (int semitones)
 {
-    for (size_t channel = 0; channel < spec.numChannels; channel++)
-        for (size_t h = 0; h < (size_t) harmonies; h++)
-            pitchShifter[channel][h].setPitch (semitones);
+    if (previousPitchValue != semitones)
+    {
+        for (size_t channel = 0; channel < spec.numChannels; channel++)
+            for (size_t h = 0; h < (size_t) harmonies; h++)
+                pitchShifter[channel][h].setPitch (semitones);
+        
+        previousPitchValue = semitones;
+    }
 }
