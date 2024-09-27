@@ -49,10 +49,11 @@ void PitchShifter::validateChange (bool on)
         if (changeGain == 0.0f && changeGainInc == 0.0f)
             return;
 
-        changeGainInc = -GAIN_CHANGE_SPEED;
+        changeGainInc = -GAIN_CHANGE_SPEED * 0.01f; // Factor más pequeño para transición suave
         changeGain += changeGainInc;
 
-        if (changeGain <= 0.0f)
+        // Usamos una condición menos agresiva para evitar saltos bruscos
+        if (changeGain <= 0.01f)
         {
             changeGain = 0.0f;
             changeGainInc = 0.0f;
@@ -64,18 +65,18 @@ void PitchShifter::validateChange (bool on)
         {
             changeGain += changeGainInc;
 
-            if (changeGain <= 0.0f)
+            if (changeGain <= 0.01f)
             {
                 changeGain = 0.0f;
-                changeGainInc = GAIN_CHANGE_SPEED;
-                actualSetPitch (pitchBuffer);
+                changeGainInc = GAIN_CHANGE_SPEED * 0.01f; // Iniciar cambio de pitch
+                actualSetPitch(pitchBuffer);
             }
         }
         else if (changeGainInc > 0)
         {
             changeGain += changeGainInc;
 
-            if (changeGain >= 1.0f)
+            if (changeGain >= 0.99f)
             {
                 changeGain = 1.0f;
                 changeGainInc = 0.0f;
@@ -85,7 +86,7 @@ void PitchShifter::validateChange (bool on)
         {
             if (changeGain == 0.0f)
             {
-                changeGainInc = GAIN_CHANGE_SPEED;
+                changeGainInc = GAIN_CHANGE_SPEED * 0.01f;
                 changeGain += changeGainInc;
             }
         }
@@ -115,6 +116,11 @@ void PitchShifter::actualSetPitch (float inSemitone)
 {
     semitone = inSemitone;
 
+    // Activar crossfade en los PitchDelay para suavizar el cambio de pitch
+    pitchDelay1.startCrossfade();
+    pitchDelay2.startCrossfade();
+    pitchDelay3.startCrossfade();
+
     calcDelta();
     calcAngleChange();
 
@@ -137,7 +143,16 @@ void PitchShifter::calcAngleChange()
 
 float PitchShifter::calcGain (float& angle)
 {
-    return 0.5f * sinf (angle) + 0.5f;
+    // Suavizar los picos de la onda sinusoidal, asegurando que el ángulo esté bien alineado
+    float gain = 0.5f * sinf(angle) + 0.5f;
+
+    // Aplicar un limitador suave para evitar saltos
+    if (gain < 0.001f)
+        gain = 0.0f;
+    else if (gain > 0.999f)
+        gain = 1.0f;
+
+    return gain;
 }
 
 void PitchShifter::validateAngleBounds (float& angle)

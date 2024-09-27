@@ -14,6 +14,8 @@ public:
     void setFs (float Fs);
     
     void setPitch (float semitone);
+    
+    void startCrossfade();
 
 private:
 
@@ -47,8 +49,6 @@ private:
     
     float calcFractionalDelay();
     float calcFractionalDelay (float delayValue, int bufferIndex);
-    
-    void startCrossfade();
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PitchDelay)
 };
