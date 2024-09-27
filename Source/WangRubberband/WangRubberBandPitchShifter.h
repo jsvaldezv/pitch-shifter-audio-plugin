@@ -17,14 +17,14 @@ public:
         initLatency = (int) rubberband->getLatency();
         maxSamples = 256;
 
-        input.initialise (spec.numChannels, spec.sampleRate);
-        output.initialise (spec.numChannels, spec.sampleRate);
+        input.initialise ((int)spec.numChannels, (int) spec.sampleRate);
+        output.initialise ((int)spec.numChannels, (int) spec.sampleRate);
 
         if (dryCompensationDelay)
         {
             dryWet = std::make_unique<juce::dsp::DryWetMixer<float>> (spec.maximumBlockSize * 3.0 + initLatency);
             dryWet->prepare (spec);
-            dryWet->setWetLatency (spec.maximumBlockSize * ((minLatency) ? 2.0 : 3.0) + initLatency);
+            dryWet->setWetLatency ((float) (spec.maximumBlockSize * ((minLatency) ? 2.0 : 3.0) + initLatency));
         }
         else
         {
@@ -33,18 +33,18 @@ public:
         }
 
         timeSmoothing.reset (spec.sampleRate, 0.05);
-        mixSmoothing.reset (spec.sampleRate, 0.3);
+        mixSmoothing.reset (spec.sampleRate, 0.5);
         pitchSmoothing.reset (spec.sampleRate, 0.1);
 
         if (minLatency)
         {
-            smallestAcceptableSize = maxSamples * 1.0;
-            largestAcceptableSize = maxSamples * 3.0;
+            smallestAcceptableSize = (int) (maxSamples * 1.0);
+            largestAcceptableSize = (int) (maxSamples * 3.0);
         }
         else
         {
-            smallestAcceptableSize = maxSamples * 2.0;
-            largestAcceptableSize = maxSamples * 4.0;
+            smallestAcceptableSize = (int) (maxSamples * 2.0);
+            largestAcceptableSize = (int) (maxSamples * 4.0);
         }
 
         setMixPercentage (100.0f);
@@ -56,13 +56,14 @@ public:
     {
         dryWet->pushDrySamples (buffer);
 
-        pitchSmoothing.setTargetValue (powf (2.0, pitchParam / 12)); // Convert semitone value into pitch scale value.
+        // Suavizado más largo para evitar cambios bruscos en el pitch
+        pitchSmoothing.setTargetValue (std::powf (2.0f, pitchParam / 12.0f)); // Convert semitone to pitch scale value
         auto newPitch = pitchSmoothing.skip (buffer.getNumSamples());
+        
         if (oldPitch != newPitch)
         {
-            // st->setPitch(newPitch);
+            // Aplicar suavemente los cambios de pitch
             rubberband->setPitchScale (newPitch);
-            // st->setPitch(newPitch);
             oldPitch = newPitch;
         }
 
@@ -71,34 +72,26 @@ public:
             // Loop to push samples to input buffer.
             for (int channel = 0; channel < buffer.getNumChannels(); channel++)
             {
-                input.pushSample (buffer.getSample (channel, sample), channel);
+                input.pushSample (buffer.getSample (channel, sample), (size_t) channel);
                 buffer.setSample (channel, sample, 0.0);
 
                 if (channel == buffer.getNumChannels() - 1)
                 {
-                    // st->putSamples(input.readPointerArray(buffer.getNumSamples()), buffer.getNumSamples);
                     auto reqSamples = rubberband->getSamplesRequired();
-                    // DBG(reqSamples);
-                    // auto reqStSamples = st->putSamples();
-                    if (reqSamples <= input.getAvailableSampleNum (0))
+
+                    if (reqSamples <= (size_t) input.getAvailableSampleNum (0))
                     {
                         // Check to trigger rubberband to process when full enough.
                         auto readSpace = output.getAvailableSampleNum (0);
 
+                        // Compress or stretch time when output ring buffer is too full or empty.
                         if (readSpace < smallestAcceptableSize)
-                        {
-                            // Compress or stretch time when output ring buffer is too full or empty.
                             timeSmoothing.setTargetValue (1.0);
-                        }
                         else if (readSpace > largestAcceptableSize)
-                        {
-                            // DBG("readSpace:" << readSpace);
                             timeSmoothing.setTargetValue (1.0);
-                        }
                         else
-                        {
                             timeSmoothing.setTargetValue (1.0);
-                        }
+                        
                         rubberband->setTimeRatio (timeSmoothing.skip ((int) reqSamples));
                         rubberband->process (input.readPointerArray ((int) reqSamples), reqSamples, false); // Process stored input samples.
                     }
@@ -111,7 +104,7 @@ public:
         if (availableSamples > 0)
         {
             // If rubberband samples are available then copy to the output ring buffer.
-            rubberband->retrieve (output.writePointerArray(), availableSamples);
+            rubberband->retrieve (output.writePointerArray(), (size_t) availableSamples);
             output.copyToBuffer (availableSamples);
         }
 
@@ -122,29 +115,24 @@ public:
         {
             for (int sample = 0; sample < buffer.getNumSamples(); sample++)
             {
-                if (output.getAvailableSampleNum (channel) > 0)
+                if (output.getAvailableSampleNum ((size_t) channel) > 0)
                 {
                     // DBG(availableOutputSamples);
                     //if (availableOutputSamples < buffer.getNumSamples())
                     //    DBG("available<numSamples!");// only begin at the beginning several
-                    buffer.setSample (channel, ((availableOutputSamples >= buffer.getNumSamples()) ? sample : sample + buffer.getNumSamples() - availableOutputSamples), output.popSample (channel));
+                    buffer.setSample (channel, ((availableOutputSamples >= buffer.getNumSamples()) ? sample : sample + buffer.getNumSamples() - availableOutputSamples), output.popSample ((size_t) channel));
                 }
             }
         }
 
+        // Ensure no phasing with mix occurs when pitch is set to +/-0 semitones.
         if (pitchParam == 0 && mixParam != 100.0)
-        {
-            // Ensure no phasing with mix occurs when pitch is set to +/-0 semitones.
             mixSmoothing.setTargetValue (0.0);
-        }
         else
-        {
-            mixSmoothing.setTargetValue (mixParam / 100.0);
-        }
+            mixSmoothing.setTargetValue (mixParam / 100.0f);
+        
         dryWet->setWetMixProportion (mixSmoothing.skip (buffer.getNumSamples()));
         dryWet->mixWetSamples (buffer);
-        //
-        // Mix in the dry signal.
     }
 
     /** Set the wet/dry mix as a % value.
@@ -180,16 +168,16 @@ public:
      */
     int getLatencyEstimationInSamples()
     {
-        return maxSamples * 3.0 + initLatency;
+        return (int) (maxSamples * 3.0 + initLatency);
     }
 
 private:
 
     std::unique_ptr<RubberBand::RubberBandStretcher> rubberband;
     RingBufferMine input, output;
-    // juce::AudioBuffer<float> inputBuffer, outputBuffer;
-    int maxSamples, initLatency, bufferFail, smallestAcceptableSize, largestAcceptableSize;
+    int maxSamples, initLatency, smallestAcceptableSize, largestAcceptableSize;
     float oldPitch, pitchParam, mixParam { 100.0f };
     std::unique_ptr<juce::dsp::DryWetMixer<float>> dryWet;
     juce::SmoothedValue<float> timeSmoothing, mixSmoothing, pitchSmoothing;
+    
 };
