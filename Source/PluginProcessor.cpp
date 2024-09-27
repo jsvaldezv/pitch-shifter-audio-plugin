@@ -85,8 +85,7 @@ void PitchShifterAudioProcessor::prepareToPlay (double sampleRate, int samplesPe
     juriHockPitchShifter.prepare (spec);
     setLatencySamples (juriHockPitchShifter.getLatency());
 
-    // Townley
-    //townleyPitchShifter.prepare (spec);
+    mineRubberband.prepare (spec);
 }
 
 void PitchShifterAudioProcessor::releaseResources() {}
@@ -130,7 +129,7 @@ void PitchShifterAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
         case Algorithm::WangSoundTouch:
             wangSoundTouchPitchShifter.process (buffer);
             break;
-            
+
         case Algorithm::WangVocoder:
             wangVocoder.process (buffer);
 
@@ -147,15 +146,20 @@ void PitchShifterAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
             break;
 
         case Algorithm::JuriHock:
-            juriHockPitchShifter.process (buffer);
 
-            if (juriHockPitchShifter.latencyChanged)
+            juriHockPitchShifter.process (buffer);
+            if (juriHockPitchShifter.getLatency() != previousLatency)
+            {
+                previousLatency = juriHockPitchShifter.getLatency();
                 setLatencySamples (juriHockPitchShifter.getLatency());
+            }
 
             break;
-    }
 
-    //townleyPitchShifter.process (buffer);
+        case Algorithm::MineRubberband:
+            mineRubberband.process (buffer);
+            break;
+    }
 }
 
 void PitchShifterAudioProcessor::updateParameters()
@@ -174,7 +178,7 @@ void PitchShifterAudioProcessor::updateParameters()
 
     juriHockPitchShifter.setSemitones (currentSemitones);
 
-    //townleyPitchShifter.setSemitones (currentSemitones);
+    mineRubberband.setSemitones (currentSemitones);
 }
 
 bool PitchShifterAudioProcessor::hasEditor() const
@@ -188,9 +192,25 @@ juce::AudioProcessorEditor* PitchShifterAudioProcessor::createEditor()
     return new juce::GenericAudioProcessorEditor (*this);
 }
 
-void PitchShifterAudioProcessor::getStateInformation (juce::MemoryBlock& /*destData*/) {}
+void PitchShifterAudioProcessor::getStateInformation (juce::MemoryBlock& destData)
+{
+    std::unique_ptr<juce::XmlElement> xml (apvts.state.createXml());
+    copyXmlToBinary (*xml, destData);
+}
 
-void PitchShifterAudioProcessor::setStateInformation (const void* /*data*/, int /*sizeInBytes*/) {}
+void PitchShifterAudioProcessor::setStateInformation (const void* data, int sizeInBytes)
+{
+    std::unique_ptr<juce::XmlElement> xmlState (getXmlFromBinary (data, sizeInBytes));
+
+    if (xmlState.get() != nullptr)
+    {
+        if (xmlState->hasTagName (apvts.state.getType()))
+        {
+            auto state = juce::ValueTree::fromXml (*xmlState);
+            apvts.replaceState (state);
+        }
+    }
+}
 
 juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
 {

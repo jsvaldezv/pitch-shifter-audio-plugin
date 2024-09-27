@@ -17,7 +17,7 @@ float PitchShifter::processSample (float x)
 
     validateChange (true);
 
-    return (g1 * x1 + g2 * x2 + g3 * x3) * (2.f / 3.f) * changeGain;
+    return (g1 * x1 + g2 * x2 + g3 * x3) * (2.0f / 3.0f) * changeGain;
 }
 
 float PitchShifter::kindaProcessSample (float x)
@@ -38,23 +38,23 @@ float PitchShifter::kindaProcessSample (float x)
 
     validateChange (false);
 
-    return (g1 * x1 + g2 * x2 + g3 * x3) * (2.f / 3.f) * changeGain;
+    return (g1 * x1 + g2 * x2 + g3 * x3) * (2.0f / 3.0f) * changeGain;
 }
 
 void PitchShifter::validateChange (bool on)
 {
     if (! on)
     {
-        if (changeGain == 0.f && changeGainInc == 0.f)
+        if (changeGain == 0.0f && changeGainInc == 0.0f)
             return;
 
         changeGainInc = -GAIN_CHANGE_SPEED;
         changeGain += changeGainInc;
 
-        if (changeGain <= 0.f)
+        if (changeGain <= 0.0f)
         {
-            changeGain = 0.f;
-            changeGainInc = 0.f;
+            changeGain = 0.0f;
+            changeGainInc = 0.0f;
         }
     }
     else
@@ -63,9 +63,9 @@ void PitchShifter::validateChange (bool on)
         {
             changeGain += changeGainInc;
 
-            if (changeGain <= 0.f)
+            if (changeGain <= 0.0f)
             {
-                changeGain = 0.f;
+                changeGain = 0.0f;
                 changeGainInc = GAIN_CHANGE_SPEED;
                 actualSetPitch (pitchBuffer);
             }
@@ -74,15 +74,15 @@ void PitchShifter::validateChange (bool on)
         {
             changeGain += changeGainInc;
 
-            if (changeGain >= 1.f)
+            if (changeGain >= 1.0f)
             {
-                changeGain = 1.f;
-                changeGainInc = 0.f;
+                changeGain = 1.0f;
+                changeGainInc = 0.0f;
             }
         }
-        else if (changeGainInc == 0.f)
+        else if (changeGainInc == 0.0f)
         {
-            if (changeGain == 0.f)
+            if (changeGain == 0.0f)
             {
                 changeGainInc = GAIN_CHANGE_SPEED;
                 changeGain += changeGainInc;
@@ -91,9 +91,9 @@ void PitchShifter::validateChange (bool on)
     }
 }
 
-void PitchShifter::setFs (float Fs)
+void PitchShifter::setFs (float inFs)
 {
-    this->Fs = Fs;
+    Fs = inFs;
     pitchDelay1.setFs (Fs);
     pitchDelay2.setFs (Fs);
     pitchDelay3.setFs (Fs);
@@ -101,18 +101,18 @@ void PitchShifter::setFs (float Fs)
     calcAngleChange();
 }
 
-void PitchShifter::setPitch (float semitone)
+void PitchShifter::setPitch (float inSemitone)
 {
-    if (this->semitone == semitone)
+    if (semitone == inSemitone)
         return;
 
-    pitchBuffer = semitone;
+    pitchBuffer = inSemitone;
     changeGainInc = -GAIN_CHANGE_SPEED;
 }
 
-void PitchShifter::actualSetPitch (float semitone)
+void PitchShifter::actualSetPitch (float inSemitone)
 {
-    this->semitone = semitone;
+    semitone = inSemitone;
 
     calcDelta();
     calcAngleChange();
@@ -124,19 +124,19 @@ void PitchShifter::actualSetPitch (float semitone)
 
 void PitchShifter::calcDelta()
 {
-    tr = powf (2.f, semitone / 12.f);
-    delta = 1.f - tr;
+    tr = powf (2.0f, semitone / 12.0f);
+    delta = 1.0f - tr;
 }
 
 void PitchShifter::calcAngleChange()
 {
-    freq = 1.f / ((MAX_DELAY_SAMPLES - 1.f) / (delta * Fs));
+    freq = 1.0f / ((MAX_DELAY_SAMPLES - 1.0f) / (delta * Fs));
     angleChange = freq * M2_PI / Fs;
 }
 
 float PitchShifter::calcGain (float& angle)
 {
-    return 0.5f * sin (angle) + 0.5f;
+    return 0.5f * sinf (angle) + 0.5f;
 }
 
 void PitchShifter::validateAngleBounds (float& angle)
@@ -145,6 +145,6 @@ void PitchShifter::validateAngleBounds (float& angle)
 
     if (angle > M2_PI)
         angle -= M2_PI;
-    else if (angle < 0.f)
+    else if (angle < 0.0f)
         angle += M2_PI;
 }

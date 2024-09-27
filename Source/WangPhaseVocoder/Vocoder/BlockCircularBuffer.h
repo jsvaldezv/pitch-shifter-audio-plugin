@@ -1,8 +1,8 @@
 #pragma once
+#include <JuceHeader.h>
 #include <cassert>
 #include <juce_core/juce_core.h>
 #include <memory>
-#include <JuceHeader.h>
 //#define DEBUGLOG
 
 template <typename ElementType = float>

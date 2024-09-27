@@ -2,7 +2,7 @@
 
 void McPhersonPitchShifter::prepare (juce::dsp::ProcessSpec& spec)
 {
-    const double smoothTime = 1e-3;
+    const double smoothTime = 1e-4;
     paramShift.reset (spec.sampleRate, smoothTime);
 
     updateFftSize ((int) spec.numChannels);

@@ -10,6 +10,7 @@ enum Algorithm
     McPherson = 4,
     Dysomni = 5,
     JuriHock = 6,
+    MineRubberband = 7,
 };
 
 static const juce::String Semitones = "Semitones";
@@ -22,6 +23,7 @@ static const juce::String WubVocoder_Algorithm = "WubVocoder";
 static const juce::String McPherson_Algorithm = "McPherson";
 static const juce::String Dysomni_Algorithm = "Dysomni";
 static const juce::String JuriHock_Algorithm = "JuriHock";
+static const juce::String MineRubberband_Algorithm = "MineRubberband";
 
 static const juce::StringArray AlgorithmList (WangRubberband_Algorithm,
                                               WangSoundTouch_Algorithm,
@@ -29,7 +31,8 @@ static const juce::StringArray AlgorithmList (WangRubberband_Algorithm,
                                               WubVocoder_Algorithm,
                                               McPherson_Algorithm,
                                               Dysomni_Algorithm,
-                                              JuriHock_Algorithm);
+                                              JuriHock_Algorithm,
+                                              MineRubberband_Algorithm);
 
 inline juce::AudioProcessorValueTreeState::ParameterLayout createParameters()
 {

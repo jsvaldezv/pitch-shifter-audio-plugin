@@ -15,14 +15,14 @@ public:
     {
         setPitchRatio (1.f);
     }
-    
+
     int getLatencyInSamples() const { return phaseVocoder.getLatencyInSamples(); }
-    
+
     void setPitchRatio (float newPitchRatio)
     {
         if (phaseVocoder.getPitchRatio() == newPitchRatio)
             return;
-        
+
         const juce::SpinLock::ScopedLockType lock (phaseVocoder.getParamLock());
         phaseVocoder.setPitchRatio (newPitchRatio);
         phaseVocoder.setSynthesisHopSize ((int) (phaseVocoder.getWindowSize() / (float) phaseVocoder.getWindowOverlapCount()));
@@ -43,7 +43,7 @@ public:
         memset (synthPhaseIncrements.data(), 0, sizeof (FloatType) * phaseVocoder.getWindowSize());
 #endif
     }
-    
+
     void process (FloatType* const buffer, const int bufferSize)
     {
         phaseVocoder.process (buffer, bufferSize, [&] (FloatType* const buffer, const int bufferSize)

@@ -66,8 +66,6 @@ public:
 
     int getLatency() { return latency; }
 
-    bool latencyChanged { false };
-
 private:
 
     juce::dsp::ProcessSpec spec;

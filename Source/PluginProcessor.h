@@ -2,12 +2,12 @@
 #include "Dysomni/DysomniPitchShifter.h"
 #include "JuriHock/StftPitchShifter.h"
 #include "McPherson/McPhersonPitchShifter.h"
+#include "MineRubberband/MineRubberbandPitchShifter.h"
 #include "Parameters.h"
-#include "Townley/TownleyPitchShifter.h"
+#include "WangPhaseVocoder/WangVocoderPitchShifter.h"
 #include "WangRubberband/WangRubberBandPitchShifter.h"
 #include "WangSoundTouch/WangSoundTouchPitchShifter.h"
 #include "WubVocoder/WubPitchShifter.h"
-#include "WangPhaseVocoder/WangVocoderPitchShifter.h"
 
 class PitchShifterAudioProcessor : public juce::AudioProcessor
 {
@@ -50,7 +50,7 @@ private:
     WangRubberBandPitchShifter wangPitchShifter; // https://github.com/wangchengzhong/Voice-Changer/blob/master/Source/PitchShifterRubberband.h
 
     WangSoundTouchPitchShifter wangSoundTouchPitchShifter; // https://github.com/wangchengzhong/Voice-Changer/blob/master/Source/PitchShifterSoundTouch.h
-    
+
     WangVocoderPitchShifter wangVocoder; // https://github.com/wangchengzhong/Voice-Changer/blob/master/Source/PitchShifter.h
 
     WubPitchShifter wubPitchShifter; // https://github.com/professorwub/pitchshifter
@@ -60,9 +60,12 @@ private:
     DysomniPitchShifter dysomniPitchShifter; // https://github.com/dysomni/Harmonizer
 
     StftPitchShifter juriHockPitchShifter; // https://github.com/jurihock/stftPitchShiftPlugin
+    int previousLatency { 0 };
 
-    // Pending...
-    //TownleyPitchShifter townleyPitchShifter; // https://github.com/MartinTownley/JUCE_VDL_Pitch-Shifter
+    MineRubberbandPitchShifter mineRubberband;
+
+    // Other options
+    // https://github.com/kupix/bungee/tree/main/src
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PitchShifterAudioProcessor)
 };

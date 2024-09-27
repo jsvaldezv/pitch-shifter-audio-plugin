@@ -17,7 +17,7 @@ public:
 
 private:
 
-    PitchShifter pitchShifter[2]; // https://github.com/dysomni/Harmonizer
+    PitchShifter pitchShifter[2];
 
     juce::dsp::ProcessSpec spec;
 

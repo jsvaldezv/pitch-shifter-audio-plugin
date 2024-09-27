@@ -8,7 +8,6 @@ void StftPitchShifter::prepare (juce::dsp::ProcessSpec& sp)
 
     try
     {
-        currentSemitones = -12;
         resetCore();
     }
 
@@ -24,11 +23,11 @@ void StftPitchShifter::resetCore()
     const bool lowlatency = true;
 
     const double samplerate = spec.sampleRate;
-    const int blocksize = lowlatency ? 512 : 2048;
+    const int blocksize = (int) spec.maximumBlockSize;
     const int dftsize = getDftsize (blocksize, 1024); // "512", "1024", "2048", "4096", "8192"
     const int overlap = getOverlap (blocksize, 4); // "4", "8", "16", "32", "64"
 
-    DBG ("Reset core (dftsize %d, overlap %d)" << dftsize << overlap);
+    DBG ("Reset core (dftsize - " << dftsize << ", overlap - " << overlap << ")");
 
     if (lowlatency)
         core = std::make_unique<InstantCore> (samplerate, blocksize, dftsize, overlap);
@@ -36,21 +35,18 @@ void StftPitchShifter::resetCore()
         core = std::make_unique<DelayedCore> (samplerate, blocksize, dftsize, overlap);
 
     core->normalize (false);
-    core->quefrency (0.0);
+    core->quefrency (0.001f);
     core->timbre (1.0);
     updateSemitones();
 
     latency = core->latency();
-    latencyChanged = true;
 
-    DBG ("Latency %d (%d ms)" << latency << static_cast<int> (1e+3 * latency / samplerate));
+    DBG ("Latency " << latency << " (" << static_cast<int> (1e+3 * latency / samplerate) << " ms)");
 }
 
 void StftPitchShifter::process (juce::AudioBuffer<float>& buffer)
 {
     std::lock_guard lock (mutex);
-
-    latencyChanged = false;
 
     const int numSamples = buffer.getNumSamples();
 
@@ -65,7 +61,7 @@ void StftPitchShifter::process (juce::AudioBuffer<float>& buffer)
     const auto process_stereo_output = [&] (const std::string& error = "")
     {
         if (! error.empty())
-            DBG ("Copy input to output (%s)" << error.c_str());
+            DBG ("Copy input to output (" << error.c_str() << ")");
 
         for (int channel = 1; channel < buffer.getNumChannels(); ++channel)
             buffer.copyFrom (channel, 0, buffer, 0, 0, numSamples);
@@ -78,10 +74,7 @@ void StftPitchShifter::process (juce::AudioBuffer<float>& buffer)
 
     else if (! core->compatible (numSamples))
     {
-        //State oldstate = state.value();
-        //State newstate = oldstate;
-        //newstate.blocksize.min = numSamples;
-
+        spec.maximumBlockSize = (juce::uint32) numSamples;
         //DBG ("Change blocksize from %d to %d" << oldstate.blocksize.min << newstate.blocksize.min);
 
         try
@@ -132,7 +125,6 @@ void StftPitchShifter::updateSemitones()
     for (int i = 0; i < std::min (stages, 5); ++i)
     {
         const double factor = std::pow (2.0, (double) currentSemitones / 12.0);
-        DBG (factor);
         factors.insert (factor);
     }
 
