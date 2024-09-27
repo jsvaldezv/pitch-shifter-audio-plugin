@@ -16,8 +16,10 @@ public:
     void setSemitones (int semitones);
 
 private:
+    
+    static const int harmonies { 5 };
 
-    PitchShifter pitchShifter[2];
+    PitchShifter pitchShifter[2][harmonies];
 
     juce::dsp::ProcessSpec spec;
 

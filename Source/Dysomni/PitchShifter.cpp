@@ -3,6 +3,7 @@
 float PitchShifter::processSample (float x)
 {
     x = x * changeGain;
+    
     float x1 = pitchDelay1.processSample (x, a1);
     float x2 = pitchDelay2.processSample (x, a2);
     float x3 = pitchDelay3.processSample (x, a3);

@@ -81,11 +81,10 @@ void PitchShifterAudioProcessor::prepareToPlay (double sampleRate, int samplesPe
     wubPitchShifter.prepare (spec);
     mcPhersonPitchShifter.prepare (spec);
     dysomniPitchShifter.prepare (spec);
-
+    mineRubberband.prepare (spec);
+    
     juriHockPitchShifter.prepare (spec);
     setLatencySamples (juriHockPitchShifter.getLatency());
-
-    mineRubberband.prepare (spec);
 }
 
 void PitchShifterAudioProcessor::releaseResources() {}
