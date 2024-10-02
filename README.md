@@ -49,16 +49,16 @@ This plugin includes several pitch-shifting algorithms. Each algorithm has its o
 Before building the Pitch Shifter Plugin, ensure you have the following installed:
 
 - **CMake**: A cross-platform build system to generate build files. Install CMake from [here](https://cmake.org/install/).
-- **Xcode (for MacOS)**: ----.
-- **Visual Studio 2022 (for Windows)**: ----.
+- **Xcode (for MacOS)**: App Store.
+- **Visual Studio 2022 (for Windows)**: [https://visualstudio.microsoft.com/es/](https://visualstudio.microsoft.com).
 
 ## Cloning the Repository and Submodules
 
 Clone the repository along with the required submodules:
 
 ```bash
-git clone <repository-url>
-cd <repository-directory>
+git clone https://github.com/jsvaldezv/pitch-shifter.git
+cd pitch-shifter
 git submodule update --init --recursive
 ```
 
@@ -70,7 +70,7 @@ The following submodules are required for the plugin to work:
 Ensure these submodules are initialized by running:
 
 ```bash
-git submodule update --init --recursive`
+git submodule update --init --recursive
 ```
 
 ---
