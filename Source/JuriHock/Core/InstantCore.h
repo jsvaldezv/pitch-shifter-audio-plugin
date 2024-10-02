@@ -7,7 +7,7 @@ class InstantCore : public Core
 public:
 
     InstantCore (const double samplerate, const int blocksize, const int dftsize, const int overlap);
-    ~InstantCore();
+    ~InstantCore() override;
 
     int latency() const override;
     bool compatible (const int blocksize) const override;

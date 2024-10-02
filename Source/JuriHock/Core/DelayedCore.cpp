@@ -1,6 +1,6 @@
 #include "DelayedCore.h"
 
-DelayedCore::DelayedCore (const double samplerate, const int blocksize, const int dftsize, const int overlap) : InstantCore (samplerate, dftsize + dftsize, dftsize, overlap), host_block_size (blocksize)
+DelayedCore::DelayedCore (const double insamplerate, const int inblocksize, const int indftsize, const int inoverlap) : InstantCore (insamplerate, indftsize + indftsize, indftsize, inoverlap), host_block_size (inblocksize)
 {
     const auto total_buffer_size = analysis_window_size + synthesis_window_size;
 
@@ -19,9 +19,9 @@ int DelayedCore::latency() const
     return 6 * dftsize - host_block_size;
 }
 
-bool DelayedCore::compatible (const int blocksize) const
+bool DelayedCore::compatible (const int inblocksize) const
 {
-    return static_cast<size_t> (blocksize) <= synthesis_window_size;
+    return static_cast<size_t> (inblocksize) <= synthesis_window_size;
 }
 
 void DelayedCore::dry (const std::span<const float> input, const std::span<float> output)
@@ -47,7 +47,7 @@ void DelayedCore::process (const std::span<const float> input, const std::span<f
 
     // shift input buffer
     std::copy (
-        buffer.input.begin() + minsamples,
+        buffer.input.begin() + (long) minsamples,
         buffer.input.end(),
         buffer.input.begin());
 
@@ -55,7 +55,7 @@ void DelayedCore::process (const std::span<const float> input, const std::span<f
     std::copy (
         input.begin(),
         input.end(),
-        buffer.input.end() - minsamples);
+        buffer.input.end() - (long) minsamples);
 
     // start processing as soon as enough samples are buffered
     if ((samples += minsamples) >= maxsamples)
@@ -73,12 +73,12 @@ void DelayedCore::process (const std::span<const float> input, const std::span<f
     // copy new output samples back
     std::copy (
         buffer.output.begin(),
-        buffer.output.begin() + minsamples,
+        buffer.output.begin() + (long) minsamples,
         output.begin());
 
     // shift output buffer
     std::copy (
-        buffer.output.begin() + minsamples,
+        buffer.output.begin() + (long) minsamples,
         buffer.output.end(),
         buffer.output.begin());
 }

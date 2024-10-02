@@ -45,14 +45,14 @@ public:
     {
         if (readPos[channel] <= writePos[channel])
             return writePos[channel] - readPos[channel];
-        
+
         return (buffer.getNumSamples() - readPos[channel]) + writePos[channel];
     }
 
     const float* const* readPointerArray (int reqSamples)
     {
         jassert (reqSamples <= buffer.getNumSamples()); // Asegurar que no se lea fuera de límites
-        
+
         for (int samplePos = 0; samplePos < reqSamples; samplePos++)
         {
             for (int channel = 0; channel < buffer.getNumChannels(); channel++)
@@ -60,7 +60,7 @@ public:
                 pointerBuffer.setSample (channel, samplePos, popSample ((size_t) channel));
             }
         }
-        
+
         return pointerBuffer.getArrayOfReadPointers();
     }
 

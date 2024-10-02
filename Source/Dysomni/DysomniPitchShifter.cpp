@@ -16,16 +16,16 @@ void DysomniPitchShifter::process (juce::AudioBuffer<float>& buffer)
         for (int i = 0; i < buffer.getNumSamples(); i++)
         {
             float out = 0.0f;
-            
+
             for (size_t h = 0; h < (size_t) harmonies; h++)
             {
                 float sample = buffer.getSample (channel, i);
-                
+
                 sample = pitchShifter[channel][h].processSample (sample);
-                
+
                 out += sample;
             }
-            
+
             buffer.setSample (channel, i, out * 0.2f);
         }
     }
@@ -38,7 +38,7 @@ void DysomniPitchShifter::setSemitones (int semitones)
         for (size_t channel = 0; channel < spec.numChannels; channel++)
             for (size_t h = 0; h < (size_t) harmonies; h++)
                 pitchShifter[channel][h].setPitch (semitones);
-        
+
         previousPitchValue = semitones;
     }
 }

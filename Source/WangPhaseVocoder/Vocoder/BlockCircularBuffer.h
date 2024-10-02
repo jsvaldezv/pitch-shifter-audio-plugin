@@ -59,7 +59,7 @@ struct BlockCircularBuffer final
         writeIndex = readIndex = 0;
     }
 
-    void setEnableLogging (const char* const bufferName, bool enabled)
+    void setEnableLogging (const char* const bufferName, bool /*enabled*/)
     {
         name = bufferName;
     }
@@ -80,11 +80,11 @@ struct BlockCircularBuffer final
         const auto internalBuffer = block.getData();
         assert (internalBuffer != destBuffer);
 
-        memcpy (destBuffer, internalBuffer + readIndex, sizeof (ElementType) * firstReadAmount);
+        memcpy (destBuffer, internalBuffer + readIndex, sizeof (ElementType) * (juce::uint32) firstReadAmount);
 
         if (firstReadAmount < destLength)
         {
-            memcpy (destBuffer + firstReadAmount, internalBuffer, sizeof (ElementType) * (static_cast<unsigned long long> (destLength) - firstReadAmount));
+            memcpy (destBuffer + firstReadAmount, internalBuffer, sizeof (ElementType) * (static_cast<unsigned long long> (destLength) - (juce::uint32) firstReadAmount));
         }
 
         readIndex += readHopSize != 0 ? readHopSize : destLength;
@@ -97,11 +97,11 @@ struct BlockCircularBuffer final
 
         auto internalBuffer = block.getData();
         assert (internalBuffer != sourceBuffer);
-        memcpy (internalBuffer + writeIndex, sourceBuffer, sizeof (ElementType) * firstWriteAmount);
+        memcpy (internalBuffer + writeIndex, sourceBuffer, sizeof (ElementType) * (juce::uint32) firstWriteAmount);
 
         if (firstWriteAmount < sourceLength)
         {
-            memcpy (internalBuffer, sourceBuffer + firstWriteAmount, sizeof (ElementType) * (static_cast<unsigned long long> (sourceLength) - firstWriteAmount));
+            memcpy (internalBuffer, sourceBuffer + firstWriteAmount, sizeof (ElementType) * (static_cast<unsigned long long> (sourceLength) - (juce::uint32) firstWriteAmount));
         }
 
         writeIndex += writeHopSize != 0 ? writeHopSize : sourceLength;
@@ -112,13 +112,13 @@ struct BlockCircularBuffer final
 
     void overlapWrite (ElementType* const sourceBuffer, const long sourceLength)
     {
-        const int writeIndexDifference = getDifferenceBetweenIndexes (writeIndex, latestDataIndex, length);
-        const int overlapSampleCount = sourceLength - writeHopSize;
+        const int writeIndexDifference = (int) (getDifferenceBetweenIndexes ((int) writeIndex, (int) latestDataIndex, (int) length));
+        const int overlapSampleCount = (int) (sourceLength - writeHopSize);
         const int overlapAmount = std::min (writeIndexDifference, overlapSampleCount);
 
         //DBG("writeIndexDifference: " << writeIndexDifference << ", overlapSampleCount: " << overlapSampleCount);
         auto tempWriteIndex = writeIndex;
-        int firstWriteAmount = writeIndex + overlapAmount > length ? length - writeIndex : overlapAmount;
+        int firstWriteAmount = (int) (writeIndex + overlapAmount > length ? length - writeIndex : overlapAmount);
         //DBG("firstWriteAmout: " << firstWriteAmount << "\n");
 
         auto* internalBuffer = block.getData();
@@ -134,16 +134,15 @@ struct BlockCircularBuffer final
         tempWriteIndex %= length;
 
         const auto remainingElements = sourceLength - overlapAmount;
-        firstWriteAmount = tempWriteIndex + remainingElements > length ? length - tempWriteIndex : remainingElements;
+        firstWriteAmount = tempWriteIndex + remainingElements > length ? (int) (length - tempWriteIndex) : (int) remainingElements;
 
-        memcpy (internalBuffer + tempWriteIndex, sourceBuffer + overlapAmount, sizeof (ElementType) * firstWriteAmount);
+        memcpy (internalBuffer + tempWriteIndex, sourceBuffer + overlapAmount, sizeof (ElementType) * (juce::uint32) firstWriteAmount);
 
         if (firstWriteAmount < remainingElements)
         {
-            memcpy (internalBuffer, sourceBuffer + overlapAmount + firstWriteAmount, sizeof (ElementType) * (remainingElements - static_cast<unsigned long long> (firstWriteAmount)));
+            memcpy (internalBuffer, sourceBuffer + overlapAmount + firstWriteAmount, sizeof (ElementType) * ((juce::uint32) remainingElements - static_cast<unsigned long long> (firstWriteAmount)));
         }
-        // DBG(writeHopSize);
-        // DBG(readHopSize);
+
         latestDataIndex = (writeIndex + sourceLength) % length;
         writeIndex += writeHopSize;
         writeIndex %= length;

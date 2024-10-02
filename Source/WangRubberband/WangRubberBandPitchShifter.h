@@ -17,8 +17,8 @@ public:
         initLatency = (int) rubberband->getLatency();
         maxSamples = 256;
 
-        input.initialise ((int)spec.numChannels, (int) spec.sampleRate);
-        output.initialise ((int)spec.numChannels, (int) spec.sampleRate);
+        input.initialise ((int) spec.numChannels, (int) spec.sampleRate);
+        output.initialise ((int) spec.numChannels, (int) spec.sampleRate);
 
         if (dryCompensationDelay)
         {
@@ -59,7 +59,7 @@ public:
         // Suavizado más largo para evitar cambios bruscos en el pitch
         pitchSmoothing.setTargetValue (std::powf (2.0f, pitchParam / 12.0f)); // Convert semitone to pitch scale value
         auto newPitch = pitchSmoothing.skip (buffer.getNumSamples());
-        
+
         if (oldPitch != newPitch)
         {
             // Aplicar suavemente los cambios de pitch
@@ -91,7 +91,7 @@ public:
                             timeSmoothing.setTargetValue (1.0);
                         else
                             timeSmoothing.setTargetValue (1.0);
-                        
+
                         rubberband->setTimeRatio (timeSmoothing.skip ((int) reqSamples));
                         rubberband->process (input.readPointerArray ((int) reqSamples), reqSamples, false); // Process stored input samples.
                     }
@@ -130,7 +130,7 @@ public:
             mixSmoothing.setTargetValue (0.0);
         else
             mixSmoothing.setTargetValue (mixParam / 100.0f);
-        
+
         dryWet->setWetMixProportion (mixSmoothing.skip (buffer.getNumSamples()));
         dryWet->mixWetSamples (buffer);
     }
@@ -179,5 +179,4 @@ private:
     float oldPitch, pitchParam, mixParam { 100.0f };
     std::unique_ptr<juce::dsp::DryWetMixer<float>> dryWet;
     juce::SmoothedValue<float> timeSmoothing, mixSmoothing, pitchSmoothing;
-    
 };

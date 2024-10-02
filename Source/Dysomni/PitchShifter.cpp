@@ -3,7 +3,7 @@
 float PitchShifter::processSample (float x)
 {
     x = x * changeGain;
-    
+
     float x1 = pitchDelay1.processSample (x, a1);
     float x2 = pitchDelay2.processSample (x, a2);
     float x3 = pitchDelay3.processSample (x, a3);
@@ -69,7 +69,7 @@ void PitchShifter::validateChange (bool on)
             {
                 changeGain = 0.0f;
                 changeGainInc = GAIN_CHANGE_SPEED * 0.01f; // Iniciar cambio de pitch
-                actualSetPitch(pitchBuffer);
+                actualSetPitch (pitchBuffer);
             }
         }
         else if (changeGainInc > 0)
@@ -144,7 +144,7 @@ void PitchShifter::calcAngleChange()
 float PitchShifter::calcGain (float& angle)
 {
     // Suavizar los picos de la onda sinusoidal, asegurando que el ángulo esté bien alineado
-    float gain = 0.5f * sinf(angle) + 0.5f;
+    float gain = 0.5f * sinf (angle) + 0.5f;
 
     // Aplicar un limitador suave para evitar saltos
     if (gain < 0.001f)

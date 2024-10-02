@@ -6,7 +6,7 @@ class DelayedCore : public InstantCore
 public:
 
     DelayedCore (const double samplerate, const int blocksize, const int dftsize, const int overlap);
-    ~DelayedCore();
+    ~DelayedCore() override;
 
     int latency() const override;
     bool compatible (const int blocksize) const override;

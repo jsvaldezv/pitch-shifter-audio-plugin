@@ -2,7 +2,7 @@
 
 void WubPitchShifter::prepare (juce::dsp::ProcessSpec& spec)
 {
-    int minWindowLength = 16 * spec.maximumBlockSize;
+    int minWindowLength = (int) (16 * spec.maximumBlockSize);
     int order = 0;
     int windowLength = 1;
 
