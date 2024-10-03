@@ -10,84 +10,76 @@ public:
 
     void initialise (int numChannels, int numSamples)
     {
-        readPos.resize (numChannels);
-        writePos.resize (numChannels);
+        readPos.resize ((size_t) numChannels);
+        writePos.resize ((size_t) numChannels);
 
-        for (int i = 0; i < readPos.size(); i++)
+        for (size_t i = 0; i < readPos.size(); i++)
         {
             readPos[i] = 0.0;
             writePos[i] = 0.0;
         }
 
-        buffer.setSize (numChannels, numSamples);
-        pointerBuffer.resize (numChannels * numSamples);
+        buffer.setSize ((int) numChannels, numSamples);
+        pointerBuffer.resize ((size_t) (numChannels * numSamples));
     }
 
     void pushSample (float sample, int channel)
     {
-        buffer.setSample (channel, writePos[channel], sample);
+        buffer.setSample (channel, writePos[(size_t) channel], sample);
 
-        if (++writePos[channel] >= buffer.getNumSamples())
+        if (++writePos[(size_t) channel] >= buffer.getNumSamples())
         {
-            writePos[channel] = 0;
+            writePos[(size_t) channel] = 0;
         }
     }
 
-    float popSample (int channel)
+    float popSample (size_t channel)
     {
-        auto sample = buffer.getSample (channel, readPos[channel]);
+        auto sample = buffer.getSample ((int) channel, readPos[channel]);
 
         if (++readPos[channel] >= buffer.getNumSamples())
-        {
             readPos[channel] = 0;
-        }
+
         return sample;
     }
 
-    int getAvailableSampleNum (int channel)
+    int getAvailableSampleNum (size_t channel)
     {
         if (readPos[channel] <= writePos[channel])
-        {
             return writePos[channel] - readPos[channel];
-        }
-        else
-        {
-            return writePos[channel] + buffer.getNumSamples() - readPos[channel];
-        }
+
+        return writePos[channel] + buffer.getNumSamples() - readPos[channel];
     }
 
     const float* readPointerArray (int reqSamples)
     {
-        for (int samplePos = 0; samplePos < reqSamples; samplePos++)
+        for (size_t samplePos = 0; samplePos < (size_t) reqSamples; samplePos++)
         {
-            for (int channel = 0; channel < buffer.getNumChannels(); channel++)
+            for (size_t channel = 0; channel < (size_t) buffer.getNumChannels(); channel++)
             {
                 pointerBuffer[samplePos * 2 + channel] = popSample (channel);
-                // pointerBuffer.setSample(channel, samplePos, popSample(channel));
             }
         }
-        return pointerBuffer.data(); // pointerBuffer.getArrayOfReadPointers();
+
+        return pointerBuffer.data();
     }
 
     void writePointerArray (float* ptrBegin, int writeNum)
     {
-        for (int i = 0; i < writeNum * 2; i++)
+        for (size_t i = 0; i < (size_t) writeNum * 2; i++)
         {
             pointerBuffer[i] = *ptrBegin;
             ptrBegin++;
         }
     }
 
-    //return pointerBuffer.data();
-
     void copyToBuffer (int numSamples)
     {
-        for (int channel = 0; channel < buffer.getNumChannels(); channel++)
+        for (size_t channel = 0; channel < (size_t) buffer.getNumChannels(); channel++)
         {
-            for (int sample = 0; sample < numSamples; sample++)
+            for (size_t sample = 0; sample < (size_t) numSamples; sample++)
             {
-                pushSample (pointerBuffer[sample * 2 + channel], channel);
-                // pushSample(pointerBuffer.getSample(channel, sample), channel);
+                pushSample (pointerBuffer[sample * 2 + channel], (int) channel);
             }
         }
     }

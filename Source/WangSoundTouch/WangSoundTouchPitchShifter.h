@@ -14,7 +14,7 @@ public:
     void prepare (juce::dsp::ProcessSpec& spec, bool dryCompensationDelay = false, bool minLatency = true)
     {
         st = std::make_unique<soundtouch::SoundTouch>();
-        st->setSampleRate (spec.sampleRate);
+        st->setSampleRate ((juce::uint32) spec.sampleRate);
         st->setChannels (spec.numChannels);
         // st->setSetting(SOUNDTOUCH_ALLOW_MMX, 1);
         st->setSetting (SETTING_USE_AA_FILTER, 1);
@@ -25,14 +25,14 @@ public:
         //soundtouch::SAMPLETYPE
         maxSamples = 256;
 
-        input.initialise (spec.numChannels, spec.sampleRate);
-        output.initialise (spec.numChannels, spec.sampleRate);
+        input.initialise ((int) spec.numChannels, (int) spec.sampleRate);
+        output.initialise ((int) spec.numChannels, (int) spec.sampleRate);
 
         if (dryCompensationDelay)
         {
             dryWet = std::make_unique<juce::dsp::DryWetMixer<float>> (spec.maximumBlockSize * 3.0 + initLatency);
             dryWet->prepare (spec);
-            dryWet->setWetLatency (spec.maximumBlockSize * ((minLatency) ? 2.0 : 3.0) + initLatency);
+            dryWet->setWetLatency (spec.maximumBlockSize * ((minLatency) ? 2.0f : 3.0f) + initLatency);
         }
         else
         {
@@ -46,13 +46,13 @@ public:
 
         if (minLatency)
         {
-            smallestAcceptableSize = maxSamples * 1.0;
-            largestAcceptableSize = maxSamples * 3.0;
+            smallestAcceptableSize = (int) (maxSamples * 1.0);
+            largestAcceptableSize = (int) (maxSamples * 3.0);
         }
         else
         {
-            smallestAcceptableSize = maxSamples * 2.0;
-            largestAcceptableSize = maxSamples * 4.0;
+            smallestAcceptableSize = (int) (maxSamples * 2.0);
+            largestAcceptableSize = (int) (maxSamples * 4.0);
         }
 
         setMixPercentage (100.0f);
@@ -66,6 +66,7 @@ public:
 
         pitchSmoothing.setTargetValue (powf (2.0, pitchParam / 12)); // Convert semitone value into pitch scale value.
         auto newPitch = pitchSmoothing.skip (buffer.getNumSamples());
+
         if (oldPitch != newPitch)
         {
             st->setPitch (newPitch);
@@ -81,10 +82,8 @@ public:
 
                 if (channel == buffer.getNumChannels() - 1)
                 {
-                    // st->putSamples(input.readPointerArray(buffer.getNumSamples()), buffer.getNumSamples);
-                    auto reqSamples = samplesPerBlock; //samplesPerBlock;// rubberband->getSamplesRequired();
-                    // DBG(reqSamples);
-                    // auto reqStSamples = st->putSamples();
+                    auto reqSamples = samplesPerBlock;
+
                     if (reqSamples <= input.getAvailableSampleNum (0))
                     {
                         // Check to trigger rubberband to process when full enough.
@@ -104,16 +103,15 @@ public:
                         {
                             timeSmoothing.setTargetValue (1.0);
                         }
-                        // st->setPitch(timeSmoothing.skip((int)reqSamples));
+
                         st->putSamples (input.readPointerArray ((int) reqSamples), static_cast<unsigned int> (reqSamples));
-                        // rubberband->process(input.readPointerArray((int)reqSamples), reqSamples, false);   // Process stored input samples.
                     }
                 }
             }
         }
 
         auto availableSamples = static_cast<int> (st->numSamples());
-        //DBG(availableSamples);
+
         if (availableSamples > 0)
         {
             float* readSample = st->ptrBegin();
@@ -129,12 +127,9 @@ public:
         {
             for (int sample = 0; sample < buffer.getNumSamples(); sample++)
             {
-                if (output.getAvailableSampleNum (channel) > 0)
+                if (output.getAvailableSampleNum ((size_t) channel) > 0)
                 {
-                    // DBG(availableOutputSamples);
-                    // if (availableOutputSamples < buffer.getNumSamples())
-                    // DBG("available<numSamples!");// only begin at the beginning several
-                    buffer.setSample (channel, ((availableOutputSamples >= buffer.getNumSamples()) ? sample : sample + buffer.getNumSamples() - availableOutputSamples), output.popSample (channel));
+                    buffer.setSample (channel, ((availableOutputSamples >= buffer.getNumSamples()) ? sample : sample + buffer.getNumSamples() - availableOutputSamples), output.popSample ((size_t) channel));
                 }
             }
         }
@@ -147,7 +142,8 @@ public:
         {
             mixSmoothing.setTargetValue (mixParam / 100.0);
         }
-        dryWet->setWetMixProportion (mixSmoothing.skip (buffer.getNumSamples()));
+
+        dryWet->setWetMixProportion ((float) (mixSmoothing.skip (buffer.getNumSamples())));
         dryWet->mixWetSamples (buffer);
     }
 
@@ -173,7 +169,7 @@ public:
 
     int getLatencyEstimationInSamples()
     {
-        return maxSamples * 3.0 + initLatency;
+        return (int) (maxSamples * 3.0 + initLatency);
     }
 
 private:
@@ -181,7 +177,7 @@ private:
     std::unique_ptr<soundtouch::SoundTouch> st;
     RingBufferForST input, output;
     juce::AudioBuffer<float> inputBuffer, outputBuffer;
-    int maxSamples, initLatency, bufferFail, smallestAcceptableSize, largestAcceptableSize, samplesPerBlock;
+    int maxSamples, initLatency, smallestAcceptableSize, largestAcceptableSize, samplesPerBlock;
     float oldPitch, pitchParam, mixParam { 100.0f };
     std::unique_ptr<juce::dsp::DryWetMixer<float>> dryWet;
     juce::SmoothedValue<double> timeSmoothing, mixSmoothing, pitchSmoothing;

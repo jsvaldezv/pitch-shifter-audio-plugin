@@ -178,10 +178,10 @@ namespace soundtouch
         static TDStretch* newInstance();
 
         /// Returns the output buffer object
-        FIFOSamplePipe* getOutput() { return &outputBuffer; };
+        FIFOSamplePipe* getOutput() { return &outputBuffer; }
 
         /// Returns the input buffer object
-        FIFOSamplePipe* getInput() { return &inputBuffer; };
+        FIFOSamplePipe* getInput() { return &inputBuffer; }
 
         /// Sets new target tempo. Normal tempo = 'SCALE', smaller values represent slower
         /// tempo, larger faster tempo.

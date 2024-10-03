@@ -23,15 +23,14 @@ public:
 
 public:
 
-    PhaseVocoder (int windowLength = 2048, int fftSize = 2048, Windows windowType = Windows::hann) : samplesTilNextProcess (windowLength),
-                                                                                                     windowSize (windowLength),
-                                                                                                     spectralBufferSize (windowLength * 2),
+    PhaseVocoder (int windowLength = 2048, int fftSize = 2048, Windows windowType = Windows::hann) : fft (std::make_unique<juce::dsp::FFT> (nearestPower2 (fftSize))),
                                                                                                      analysisBuffer (windowLength),
-                                                                                                     resampleBufferSize (windowLength),
                                                                                                      synthesisBuffer (windowLength * 3),
-
-                                                                                                     windowFunction (windowLength),
-                                                                                                     fft (std::make_unique<juce::dsp::FFT> (nearestPower2 (fftSize)))
+                                                                                                     spectralBufferSize (windowLength * 2),
+                                                                                                     samplesTilNextProcess (windowLength),
+                                                                                                     windowFunction ((size_t) windowLength),
+                                                                                                     windowSize (windowLength),
+                                                                                                     resampleBufferSize (windowLength)
     {
         windowOverlaps = getOverlapsRequiredForWindowType (windowType);
         analysisHopSize = windowLength / windowOverlaps;
@@ -41,33 +40,56 @@ public:
 
         spectralBufferSize = windowLength * (1 / MinPitchRatio) < spectralBufferSize ? (int) ceil (windowLength * (1 / MinPitchRatio)) : spectralBufferSize;
 
-        spectralBuffer.resize (spectralBufferSize);
+        spectralBuffer.resize ((size_t) spectralBufferSize);
 
-        std::fill (spectralBuffer.data(), spectralBuffer.data() + spectralBufferSize, 0.f);
+        std::fill (spectralBuffer.data(), spectralBuffer.data() + spectralBufferSize, 0.0f);
 
         const auto maxResampleSize = (int) std::ceil (std::max (this->windowSize * MaxPitchRatio,
                                                                 this->windowSize / MinPitchRatio));
 
-        resampleBuffer.resize (maxResampleSize);
-        std::fill (resampleBuffer.data(), resampleBuffer.data() + maxResampleSize, 0.f);
+        resampleBuffer.resize ((size_t) maxResampleSize);
+        std::fill (resampleBuffer.data(), resampleBuffer.data() + maxResampleSize, 0.0f);
     }
 
-    juce::SpinLock& getParamLock() { return paramLock; }
+    juce::SpinLock& getParamLock()
+    {
+        return paramLock;
+    }
 
-    int getWindowSize() const { return windowSize; }
-    int getLatencyInSamples() const { return windowSize; }
-    int getWindowOverlapCount() { return windowOverlaps; }
+    int getWindowSize() const
+    {
+        return windowSize;
+    }
 
-    float getPitchRatio() const { return pitchRatio; }
+    int getLatencyInSamples() const
+    {
+        return windowSize;
+    }
+
+    int getWindowOverlapCount()
+    {
+        return windowOverlaps;
+    }
+
+    float getPitchRatio() const
+    {
+        return pitchRatio;
+    }
 
     void setPitchRatio (float newRatio)
     {
         pitchRatio = std::clamp (newRatio, PhaseVocoder::MinPitchRatio, PhaseVocoder::MaxPitchRatio);
     }
 
-    float getTimeStretchRatio() const { return timeStretchRatio; }
+    float getTimeStretchRatio() const
+    {
+        return timeStretchRatio;
+    }
 
-    int getResampleBufferSize() const { return resampleBufferSize; }
+    int getResampleBufferSize() const
+    {
+        return resampleBufferSize;
+    }
 
     void updateResampleBufferSize()
     {
@@ -75,14 +97,20 @@ public:
         timeStretchRatio = synthesisHopSize / (float) analysisHopSize;
     }
 
-    int getSynthesisHopSize() const { return synthesisHopSize; }
+    int getSynthesisHopSize() const
+    {
+        return synthesisHopSize;
+    }
 
     void setSynthesisHopSize (int hopSize)
     {
         synthesisHopSize = hopSize;
     }
 
-    int getAnalysisHopSize() const { return analysisHopSize; }
+    int getAnalysisHopSize() const
+    {
+        return analysisHopSize;
+    }
 
     void setAnalysisHopSize (int hopSize)
     {
@@ -94,7 +122,10 @@ public:
         return windowFunction.data();
     }
 
-    float getRescalingFactor() const { return rescalingFactor; }
+    float getRescalingFactor() const
+    {
+        return rescalingFactor;
+    }
 
     void setRescalingFactor (float factor)
     {
@@ -106,31 +137,15 @@ public:
         juce::ScopedNoDenormals noDenormals;
         const juce::SpinLock::ScopedLockType lock (paramLock);
 
-        static int callbackCount = 0;
-
-        /////////////////
-        //DBG(" ");
-        //DBG("Callback: " << ++callbackCount << ", SampleCount: " << incomingSampleCount <<
-        //	", (+ incoming): " << audioBufferSize);
-        //////////////////
-
-        for (auto internalOffset = 0, internalBufferSize = 0;
-             internalOffset < audioBufferSize;
-             internalOffset += internalBufferSize)
+        for (auto internalOffset = 0, internalBufferSize = 0; internalOffset < audioBufferSize; internalOffset += internalBufferSize)
         {
             const auto remainingIncomingSamples = audioBufferSize - internalOffset;
-            internalBufferSize = incomingSampleCount + remainingIncomingSamples >= samplesTilNextProcess ? samplesTilNextProcess - incomingSampleCount : remainingIncomingSamples;
-            /////////////////////////////////
-            // DBG(samplesTilNextProcess);
-            //DBG("Internal buffer: Offset: " << internalOffset << ", Size: " << internalBufferSize);
-            /////////////////////////////////
+
+            internalBufferSize = (int) (incomingSampleCount + remainingIncomingSamples >= samplesTilNextProcess ? samplesTilNextProcess - incomingSampleCount : remainingIncomingSamples);
+
             jassert (internalBufferSize <= audioBufferSize);
 
-            const auto previousAnalysisWriteIndex = analysisBuffer.getReadIndex();
             analysisBuffer.write (audioBuffer + internalOffset, internalBufferSize);
-            ///////////////////////////
-            //DBG("Analysis Write Index: " << previousAnalysisWriteIndex << " -> " << analysisBuffer.getWriteIndex());
-            ///////////////////////////
             incomingSampleCount += internalBufferSize;
 
             // Collected enough samples, do processing
@@ -139,10 +154,6 @@ public:
                 isProcessing = true;
 
                 incomingSampleCount -= samplesTilNextProcess;
-                ////////////////////////////////////////////////////////
-                //DBG(" ");
-                //DBG("Process: SampleCount: " << incomingSampleCount);
-                ////////////////////////////////////////////////////////
 
                 // After first processing, do another process every analysisHopSize samples
                 samplesTilNextProcess = analysisHopSize;
@@ -152,9 +163,6 @@ public:
                 // jassert(spectralBufferSize > windowSize);
                 analysisBuffer.setReadHopSize (analysisHopSize);
                 analysisBuffer.read (spectralBufferData, windowSize);
-
-                // spectralBuffer.resize(spectralBufferSize * 2);
-                // std::fill(spectralBuffer.begin(), spectralBuffer.end(), 0);
 
                 // Apply window to signal
                 juce::FloatVectorOperations::multiply (spectralBufferData, windowFunction.data(), windowSize);
@@ -168,8 +176,6 @@ public:
                 processCallback (spectralBufferData, spectralBufferSize);
 
                 fft->performRealOnlyInverseTransform (spectralBufferData);
-
-                // spectralBuffer.resize(spectralBufferSize);
 
                 // Undo signal back to original rotation
                 std::rotate (spectralBufferData, spectralBufferData + (windowSize / 2), spectralBufferData + windowSize);
@@ -188,22 +194,14 @@ public:
             // Emit silence until we start producing output
             if (! isProcessing)
             {
-                std::fill (audioBuffer + internalOffset, audioBuffer + internalOffset + internalBufferSize, 0.f);
-
-                // DBG("Zeroed output: " << internalOffset << " -> " << internalBufferSize);
+                std::fill (audioBuffer + internalOffset, audioBuffer + internalOffset + internalBufferSize, 0.0f);
                 continue;
             }
 
-            const auto previousSynthesisReadIndex = synthesisBuffer.getReadIndex();
             synthesisBuffer.read (audioBuffer + internalOffset, internalBufferSize);
-            //#endif
-
-            //DBG("Synthesis Read Index: " << previousSynthesisReadIndex << " -> " << synthesisBuffer.getReadIndex());
         }
-        // #if USE_3rdPARTYPITCHSHIFT==false
-        // Rescale output
-        juce::FloatVectorOperations::multiply (audioBuffer, 1.f / rescalingFactor, audioBufferSize);
-        // #endif
+
+        juce::FloatVectorOperations::multiply (audioBuffer, 1.0f / rescalingFactor, audioBufferSize);
     }
 
     // Principal argument - Unwrap a phase argument to between [-PI, PI]
@@ -218,11 +216,13 @@ public:
     {
         return (int) log2 (juce::nextPowerOfTwo (value));
     }
+
     void setProcessFlag (bool flag)
     {
         std::lock_guard<std::mutex> lock (flagLock);
         processDone = flag;
     }
+
     bool getProcessFlag()
     {
         std::lock_guard<std::mutex> lock (flagLock);
@@ -268,7 +268,7 @@ private:
 
     void initialiseWindow (JuceWindowTypes window)
     {
-        JuceWindow::fillWindowingTables (windowFunction.data(), windowSize, window, false);
+        JuceWindow::fillWindowingTables (windowFunction.data(), (size_t) windowSize, window, false);
     }
 
 protected:
@@ -280,10 +280,9 @@ private:
     BlockCircularBuffer<FloatType> analysisBuffer;
 
     std::vector<FloatType> spectralBuffer;
-    //#if USE_3rdPARTYPITCHSHIFT==false
     std::vector<FloatType> resampleBuffer;
     BlockCircularBuffer<FloatType> synthesisBuffer;
-    //#endif
+
     // Misc state
     long incomingSampleCount = 0;
     int spectralBufferSize = 0;
@@ -296,15 +295,13 @@ private:
     bool processDone { true };
 
     std::vector<FloatType> windowFunction;
-    float rescalingFactor = 1.f;
+    float rescalingFactor = 1.0f;
     int analysisHopSize = 0;
     int synthesisHopSize = 0;
     int windowSize = 0;
     int resampleBufferSize = 0;
     int windowOverlaps = 0;
 
-    int spectrumNum = 1024;
-
-    float pitchRatio = 0.f;
-    float timeStretchRatio = 1.f;
+    float pitchRatio = 0.0f;
+    float timeStretchRatio = 1.0f;
 };

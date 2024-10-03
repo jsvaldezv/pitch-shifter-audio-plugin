@@ -130,6 +130,7 @@ void AAFilter::calculateCoeffs()
         cntTemp = (double) i - (double) (length / 2);
 
         temp = cntTemp * wc;
+
         if (temp != 0)
         {
             h = sin (temp) / temp; // sinc function
@@ -202,8 +203,8 @@ uint AAFilter::evaluate (FIFOSampleBuffer& dest, FIFOSampleBuffer& src) const
 
     numSrcSamples = src.numSamples();
     psrc = src.ptrBegin();
-    pdest = dest.ptrEnd (numSrcSamples);
-    result = pFIR->evaluate (pdest, psrc, numSrcSamples, numChannels);
+    pdest = dest.ptrEnd ((uint) numSrcSamples);
+    result = pFIR->evaluate (pdest, psrc, numSrcSamples, (uint) numChannels);
     src.receiveSamples (result);
     dest.putSamples (result);
 

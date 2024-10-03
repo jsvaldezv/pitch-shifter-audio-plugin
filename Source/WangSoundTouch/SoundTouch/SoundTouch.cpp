@@ -131,7 +131,7 @@ uint SoundTouch::getVersionId()
 // Sets the number of channels, 1 = mono, 2 = stereo
 void SoundTouch::setChannels (uint numChannels)
 {
-    if (! verifyNumberOfChannels (numChannels))
+    if (! verifyNumberOfChannels ((int) numChannels))
         return;
 
     channels = numChannels;
@@ -393,13 +393,13 @@ int SoundTouch::getSetting (int settingId) const
     switch (settingId)
     {
         case SETTING_USE_AA_FILTER:
-            return (uint) pRateTransposer->isAAFilterEnabled();
+            return (int) pRateTransposer->isAAFilterEnabled();
 
         case SETTING_AA_FILTER_LENGTH:
-            return pRateTransposer->getAAFilter()->getLength();
+            return (int) pRateTransposer->getAAFilter()->getLength();
 
         case SETTING_USE_QUICKSEEK:
-            return (uint) pTDStretch->isQuickSeekEnabled();
+            return (int) pTDStretch->isQuickSeekEnabled();
 
         case SETTING_SEQUENCE_MS:
             pTDStretch->getParameters (NULL, &temp, NULL, NULL);
@@ -494,9 +494,9 @@ uint SoundTouch::numUnprocessedSamples() const
 /// 'numsample' samples in the buffer, returns all that available.
 ///
 /// \return Number of samples returned.
-uint SoundTouch::receiveSamples (SAMPLETYPE* output, uint maxSamples)
+uint SoundTouch::receiveSamples (SAMPLETYPE* inoutput, uint maxSamples)
 {
-    uint ret = FIFOProcessor::receiveSamples (output, maxSamples);
+    uint ret = FIFOProcessor::receiveSamples (inoutput, maxSamples);
     samplesOutput += (long) ret;
     return ret;
 }

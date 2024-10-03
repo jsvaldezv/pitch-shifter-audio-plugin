@@ -13,11 +13,11 @@ static void linearResample (const float* const originalSignal, const int origina
 
     for (int i = 0; i < newSignalSize; ++i)
     {
-        const auto wholeIndex = (int) floor (index);
+        const auto wholeIndex = (int) std::floor (index);
         const auto fractionIndex = index - wholeIndex;
         const auto sampleA = originalSignal[wholeIndex];
         const auto sampleB = originalSignal[wholeIndex + 1];
-        newSignal[i] = lerp (sampleA, sampleB, fractionIndex);
+        newSignal[i] = (float) lerp (sampleA, sampleB, fractionIndex);
         index += scale;
     }
 }

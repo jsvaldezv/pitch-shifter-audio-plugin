@@ -159,7 +159,7 @@ namespace soundtouch
         /// Get number of channels
         int getChannels()
         {
-            return channels;
+            return (int) channels;
         }
 
         /// Returns nonzero if there aren't any samples available for outputting.

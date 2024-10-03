@@ -368,8 +368,6 @@ void BPMDetect::updateBeatPos (int process_samples)
     // detect beats
     for (int i = 0; i < skipstep; i++)
     {
-        LONG_SAMPLETYPE max = 0;
-
         float sum = beatcorr_ringbuff[beatcorr_ringbuffpos];
         sum -= beat_lpf.update (sum);
 
@@ -504,7 +502,7 @@ void MAFilter (float* dest, const float* source, int start, int end, int N)
 
 float BPMDetect::getBpm()
 {
-    double peakPos;
+    double mpeakPos;
     double coeff;
     PeakFinder peakFinder;
 
@@ -522,7 +520,7 @@ float BPMDetect::getBpm()
     MAFilter (data, xcorr, windowStart, windowLen, MOVING_AVERAGE_N);
 
     // find peak position
-    peakPos = peakFinder.detectPeak (data, windowStart, windowLen);
+    mpeakPos = peakFinder.detectPeak (data, windowStart, windowLen);
 
     // save bpm debug data if debug data writing enabled
     _SaveDebugData ("soundtouch-bpm-smoothed.txt", data, windowStart, windowLen, coeff);
@@ -530,13 +528,13 @@ float BPMDetect::getBpm()
     delete[] data;
 
     assert (decimateBy != 0);
-    if (peakPos < 1e-9)
+    if (mpeakPos < 1e-9)
         return 0.0; // detection failed.
 
     _SaveDebugBeatPos ("soundtouch-detected-beats.txt", beats);
 
     // calculate BPM
-    float bpm = (float) (coeff / peakPos);
+    float bpm = (float) (coeff / mpeakPos);
     return (bpm >= MIN_BPM && bpm <= MAX_BPM_VALID) ? bpm : 0;
 }
 
@@ -549,16 +547,16 @@ float BPMDetect::getBpm()
 /// You can query a suitable array sized by calling this with NULL in "pos" & "values".
 ///
 /// \return number of beats in the arrays.
-int BPMDetect::getBeats (float* pos, float* values, int max_num)
+int BPMDetect::getBeats (float* inpos, float* values, int max_num)
 {
     int num = (int) beats.size();
-    if ((! pos) || (! values))
+    if ((! inpos) || (! values))
         return num; // pos or values NULL, return just size
 
     for (int i = 0; (i < num) && (i < max_num); i++)
     {
-        pos[i] = beats[i].pos;
-        values[i] = beats[i].strength;
+        inpos[i] = beats[(size_t) i].pos;
+        values[i] = beats[(size_t) i].strength;
     }
     return num;
 }

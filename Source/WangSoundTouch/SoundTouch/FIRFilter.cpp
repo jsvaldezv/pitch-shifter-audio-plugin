@@ -113,6 +113,7 @@ uint FIRFilter::evaluateFilterStereo (SAMPLETYPE* dest, const SAMPLETYPE* src, u
         dest[j] = (SAMPLETYPE) suml;
         dest[j + 1] = (SAMPLETYPE) sumr;
     }
+
     return numSamples - ilength;
 }
 

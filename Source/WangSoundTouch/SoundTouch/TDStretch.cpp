@@ -56,21 +56,6 @@ using namespace soundtouch;
 
 /*****************************************************************************
  *
- * Constant definitions
- *
- *****************************************************************************/
-
-// Table for the hierarchical mixing position seeking algorithm
-const short _scanOffsets[5][24] = {
-    { 124, 186, 248, 310, 372, 434, 496, 558, 620, 682, 744, 806, 868, 930, 992, 1054, 1116, 1178, 1240, 1302, 1364, 1426, 1488, 0 },
-    { -100, -75, -50, -25, 25, 50, 75, 100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-    { -20, -15, -10, -5, 5, 10, 15, 20, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-    { -4, -3, -2, -1, 1, 2, 3, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-    { 121, 114, 97, 114, 98, 105, 108, 32, 104, 99, 117, 111, 116, 100, 110, 117, 111, 115, 0, 0, 0, 0, 0, 0 }
-};
-
-/*****************************************************************************
- *
  * Implementation of the class 'TDStretch'
  *
  *****************************************************************************/
@@ -758,7 +743,7 @@ void TDStretch::acceptNewOverlapLength (int newOverlapLength)
 
 // Operator 'new' is overloaded so that it automatically creates a suitable instance
 // depending on if we've a MMX/SSE/etc-capable CPU available or not.
-void* TDStretch::operator new (size_t s)
+void* TDStretch::operator new (size_t)
 {
     // Notice! don't use "new TDStretch" directly, use "newInstance" to create a new instance instead!
     ST_THROW_RT_ERROR ("Error in TDStretch::new: Don't use 'new TDStretch' directly, use 'newInstance' member instead!");

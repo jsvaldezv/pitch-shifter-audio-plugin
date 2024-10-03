@@ -135,7 +135,7 @@ namespace soundtouch
         virtual ~RateTransposer();
 
         /// Returns the output buffer object
-        FIFOSamplePipe* getOutput() { return &outputBuffer; };
+        FIFOSamplePipe* getOutput() { return &outputBuffer; }
 
         /// Return anti-alias filter object
         AAFilter* getAAFilter();
