@@ -75,13 +75,20 @@ void PitchShifterAudioProcessor::prepareToPlay (double sampleRate, int samplesPe
     spec.numChannels = (juce::uint32) getTotalNumOutputChannels();
     spec.sampleRate = sampleRate;
 
-    wangPitchShifter.prepare (spec, true, true);
+    wangRubberBandPitchShifter.reportLatency = [this] (int numSamples)
+    {
+        //setLatencySamples (numSamples);
+        //DBG ("[Custom - Wang Rubberband] Latency updated in plugin processor with " << numSamples << " samples");
+    };
+    
+    wangRubberBandPitchShifter.prepare (spec, true, true);
+    
     wangSoundTouchPitchShifter.prepare (spec, true, true);
-    wangVocoder.prepare (spec);
+    wangVocoderPitchShifter.prepare (spec);
     wubPitchShifter.prepare (spec);
     mcPhersonPitchShifter.prepare (spec);
     dysomniPitchShifter.prepare (spec);
-    mineRubberband.prepare (spec);
+    mineRubberbandPitchShifter.prepare (spec);
 
     juriHockPitchShifter.reportLatency = [this] (int numSamples)
     {
@@ -127,7 +134,7 @@ void PitchShifterAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     switch ((int) apvts.getRawParameterValue (Algorithm)->load())
     {
         case Algorithm::WangRubberband:
-            wangPitchShifter.process (buffer);
+            wangRubberBandPitchShifter.process (buffer);
             break;
 
         case Algorithm::WangSoundTouch:
@@ -135,7 +142,7 @@ void PitchShifterAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
             break;
 
         case Algorithm::WangVocoder:
-            wangVocoder.process (buffer);
+            wangVocoderPitchShifter.process (buffer);
 
         case Algorithm::WubVocoder:
             wubPitchShifter.process (buffer);
@@ -154,7 +161,7 @@ void PitchShifterAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
             break;
 
         case Algorithm::MineRubberband:
-            mineRubberband.process (buffer);
+            mineRubberbandPitchShifter.process (buffer);
             break;
     }
 }
@@ -163,9 +170,11 @@ void PitchShifterAudioProcessor::updateParameters()
 {
     currentSemitones = (int) apvts.getRawParameterValue (Semitones)->load();
 
-    wangPitchShifter.setSemitones (currentSemitones);
+    wangRubberBandPitchShifter.setSemitones (currentSemitones);
 
     wangSoundTouchPitchShifter.setSemitones (currentSemitones);
+    
+    wangVocoderPitchShifter.setSemitones (currentSemitones);
 
     wubPitchShifter.setSemitones (currentSemitones);
 
@@ -175,7 +184,7 @@ void PitchShifterAudioProcessor::updateParameters()
 
     juriHockPitchShifter.setSemitones (currentSemitones);
 
-    mineRubberband.setSemitones (currentSemitones);
+    mineRubberbandPitchShifter.setSemitones (currentSemitones);
 }
 
 bool PitchShifterAudioProcessor::hasEditor() const

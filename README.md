@@ -100,7 +100,7 @@ class MyAudioProcessor : public juce::AudioProcessor
 {
 public:
     // Pitch shifter object declaration
-    WangRubberBandPitchShifter wangPitchShifter;
+    WangRubberBandPitchShifter wangRubberBandPitchShifter;
     
     // If using a different algorithm:
     // DysomniPitchShifter dysomniPitchShifter;
@@ -121,7 +121,7 @@ void prepareToPlay (double sampleRate, int samplesPerBlock) override
     spec.sampleRate = sampleRate;
 
     // Prepare the pitch shifter
-    wangPitchShifter.prepare (spec, true, true); // Use the pitch shifter's prepare method
+    wangRubberBandPitchShifter.prepare (spec, true, true); // Use the pitch shifter's prepare method
 
     // For other pitch shifters, adjust accordingly:
     // dysomniPitchShifter.prepare(spec);
@@ -136,7 +136,7 @@ You can set the number of semitones that the pitch shifter should shift by using
 ```bash
 void setPitchShifting (int currentSemitones)
 {
-    wangPitchShifter.setSemitones (currentSemitones);
+    wangRubberBandPitchShifter.setSemitones (currentSemitones);
 
     // For other pitch shifters:
     // dysomniPitchShifter.setSemitones(currentSemitones);
@@ -152,7 +152,7 @@ In the processBlock method, pass the audio buffer to the pitch shifter to apply 
 void processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer&) override
 {
     // Process the audio buffer with the pitch shifter
-    wangPitchShifter.process (buffer);
+    wangRubberBandPitchShifter.process (buffer);
 
     // For other pitch shifters:
     // dysomniPitchShifter.process(buffer);

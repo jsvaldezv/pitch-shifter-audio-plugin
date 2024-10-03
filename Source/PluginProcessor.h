@@ -47,11 +47,11 @@ private:
     int currentSemitones { 0 };
 
     // Algorithms
-    WangRubberBandPitchShifter wangPitchShifter; // https://github.com/wangchengzhong/Voice-Changer/blob/master/Source/PitchShifterRubberband.h
+    WangRubberBandPitchShifter wangRubberBandPitchShifter; // https://github.com/wangchengzhong/Voice-Changer/blob/master/Source/PitchShifterRubberband.h
 
     WangSoundTouchPitchShifter wangSoundTouchPitchShifter; // https://github.com/wangchengzhong/Voice-Changer/blob/master/Source/PitchShifterSoundTouch.h
 
-    WangVocoderPitchShifter wangVocoder; // https://github.com/wangchengzhong/Voice-Changer/blob/master/Source/PitchShifter.h
+    WangVocoderPitchShifter wangVocoderPitchShifter; // https://github.com/wangchengzhong/Voice-Changer/blob/master/Source/PitchShifter.h
 
     WubPitchShifter wubPitchShifter; // https://github.com/professorwub/pitchshifter
 
@@ -62,7 +62,7 @@ private:
     StftPitchShifter juriHockPitchShifter; // https://github.com/jurihock/stftPitchShiftPlugin
     int previousLatency { 0 };
 
-    MineRubberbandPitchShifter mineRubberband;
+    MineRubberbandPitchShifter mineRubberbandPitchShifter;
 
     // Other options
     // https://github.com/kupix/bungee/tree/main/src
