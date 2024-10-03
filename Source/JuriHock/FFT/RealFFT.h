@@ -1,5 +1,5 @@
 #pragma once
 
-#include <StftPitchShift/RFFT.h>
+#include "../stftPitchShift/RFFT.h"
 
 typedef stftpitchshift::RFFT RealFFT;

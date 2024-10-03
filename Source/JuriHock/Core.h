@@ -2,8 +2,8 @@
 
 #include "FFT.h"
 #include "pocketfft/pocketfft.h"
-#include <StftPitchShift/STFT.h>
-#include <StftPitchShift/StftPitchShiftCore.h>
+#include "stftPitchShift/STFT.h"
+#include "stftPitchShift/StftPitchShiftCore.h"
 
 class Core
 {

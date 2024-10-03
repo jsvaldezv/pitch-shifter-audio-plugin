@@ -56,8 +56,6 @@ public:
 
     void prepare (juce::dsp::ProcessSpec&);
 
-    void resetCore();
-
     void process (juce::AudioBuffer<float>&);
 
     void setSemitones (int semitones);
@@ -65,16 +63,31 @@ public:
     void updateSemitones();
 
     int getLatency() { return latency; }
+    
+    std::function<void(int)> reportLatency;
 
 private:
+    
+    struct State
+    {
+        double samplerate {};
+        struct { int min, max; } blocksize {};
+    };
+
+    const State nostate;
 
     juce::dsp::ProcessSpec spec;
-
-    std::unique_ptr<Core> core;
-
-    std::mutex mutex;
 
     int latency { 0 };
 
     int currentSemitones { 0 };
+
+    std::mutex mutex;
+    std::optional<State> state;
+    std::unique_ptr<Core> core;
+
+    void resetCore();
+    void resetCore (const State& state);
+    
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (StftPitchShifter)
 };

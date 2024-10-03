@@ -4,11 +4,29 @@ void StftPitchShifter::prepare (juce::dsp::ProcessSpec& sp)
 {
     std::lock_guard lock (mutex);
 
+    state = std::nullopt;
+    core = nullptr;
     spec = sp;
+    
+    if (spec.sampleRate < 1)
+    {
+        DBG ("[Custom] Prepare to play, invalid samplerate -> " << spec.sampleRate);
+        return;
+    }
+
+    if (spec.maximumBlockSize < 1)
+    {
+        DBG ("[Custom] Prepare to play, invalid blocksize -> " << (int) spec.maximumBlockSize);
+        return;
+    }
+    
+    DBG ("[Custom] Prepare to play (samplerate " << spec.sampleRate << ", blocksize " << (int) spec.maximumBlockSize << ")");
+    
+    state = { spec.sampleRate, { (int) spec.maximumBlockSize, (int) spec.maximumBlockSize } };
 
     try
     {
-        resetCore();
+        resetCore (state.value());
     }
 
     catch (const std::exception& exception)
@@ -16,6 +34,34 @@ void StftPitchShifter::prepare (juce::dsp::ProcessSpec& sp)
         juce::ignoreUnused (exception);
         DBG (exception.what());
     }
+}
+
+void StftPitchShifter::resetCore (const State& inState)
+{
+    const bool lowlatency = true;
+
+    const double samplerate = inState.samplerate;
+    const int blocksize = lowlatency ? inState.blocksize.min : inState.blocksize.max;
+    const int dftsize = getDftsize (blocksize, 1024); // "512", "1024", "2048", "4096", "8192"
+    const int overlap = getOverlap (blocksize, 4); // "4", "8", "16", "32", "64"
+
+    DBG ("[Custom] Reset core (dftsize - " << dftsize << ", overlap - " << overlap << ")");
+
+    if (lowlatency)
+        core = std::make_unique<InstantCore> (samplerate, blocksize, dftsize, overlap);
+    else
+        core = std::make_unique<DelayedCore> (samplerate, blocksize, dftsize, overlap);
+
+    core->normalize (false);
+    core->quefrency (0.0f);
+    core->timbre (1.0);
+    updateSemitones();
+
+    latency = core->latency();
+    
+    DBG ("[Custom] Latency " << latency << " (" << static_cast<int> (1e+3 * latency / samplerate) << " ms)");
+    
+    reportLatency (latency);
 }
 
 void StftPitchShifter::resetCore()
@@ -27,7 +73,7 @@ void StftPitchShifter::resetCore()
     const int dftsize = getDftsize (blocksize, 1024); // "512", "1024", "2048", "4096", "8192"
     const int overlap = getOverlap (blocksize, 4); // "4", "8", "16", "32", "64"
 
-    DBG ("Reset core (dftsize - " << dftsize << ", overlap - " << overlap << ")");
+    DBG ("[Custom] Reset core (dftsize - " << dftsize << ", overlap - " << overlap << ")");
 
     if (lowlatency)
         core = std::make_unique<InstantCore> (samplerate, blocksize, dftsize, overlap);
@@ -35,13 +81,13 @@ void StftPitchShifter::resetCore()
         core = std::make_unique<DelayedCore> (samplerate, blocksize, dftsize, overlap);
 
     core->normalize (false);
-    core->quefrency (0.001f);
+    core->quefrency (0.0f);
     core->timbre (1.0);
     updateSemitones();
 
     latency = core->latency();
 
-    DBG ("Latency " << latency << " (" << static_cast<int> (1e+3 * latency / samplerate) << " ms)");
+    DBG ("[Custom] Latency " << latency << " (" << static_cast<int> (1e+3 * latency / samplerate) << " ms)");
 }
 
 void StftPitchShifter::process (juce::AudioBuffer<float>& buffer)
@@ -74,12 +120,19 @@ void StftPitchShifter::process (juce::AudioBuffer<float>& buffer)
 
     else if (! core->compatible (numSamples))
     {
-        spec.maximumBlockSize = (juce::uint32) numSamples;
-        //DBG ("Change blocksize from %d to %d" << oldstate.blocksize.min << newstate.blocksize.min);
+        State oldstate = state.value();
+        State newstate = oldstate;
+
+        newstate.blocksize.min = numSamples;
+        
+        DBG ("Change blocksize from %d to %d" << oldstate.blocksize.min << newstate.blocksize.min);
 
         try
         {
-            resetCore();
+            resetCore (newstate);
+            
+            state = newstate;
+            
             process_mono_input();
             process_stereo_output();
         }
@@ -104,16 +157,30 @@ void StftPitchShifter::process (juce::AudioBuffer<float>& buffer)
     }
 
     TOC();
+    
+    if (LAP())
+    {
+        const double samplerate = state.value_or(nostate).samplerate;
+        const int blocksize  = state.value_or(nostate).blocksize.min;
+
+        juce::ignoreUnused(samplerate, blocksize);
+
+        DBG (CHRONOMETRY(samplerate, blocksize));
+    }
 }
 
 void StftPitchShifter::setSemitones (int semitones)
 {
-    std::lock_guard lock (mutex);
+    //std::lock_guard lock (mutex);
 
-    if (core)
-        currentSemitones = semitones;
-
-    updateSemitones();
+    if (semitones != currentSemitones)
+    {
+        if (core)
+        {
+            currentSemitones = semitones;
+            updateSemitones();
+        }
+    }
 }
 
 void StftPitchShifter::updateSemitones()

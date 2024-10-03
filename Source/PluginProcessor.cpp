@@ -83,8 +83,13 @@ void PitchShifterAudioProcessor::prepareToPlay (double sampleRate, int samplesPe
     dysomniPitchShifter.prepare (spec);
     mineRubberband.prepare (spec);
 
+    juriHockPitchShifter.reportLatency = [this] (int numSamples)
+    {
+        setLatencySamples (numSamples);
+        DBG ("[Custom] Latency updated in plugin processor with " << numSamples << " samples");
+    };
+    
     juriHockPitchShifter.prepare (spec);
-    setLatencySamples (juriHockPitchShifter.getLatency());
 }
 
 void PitchShifterAudioProcessor::releaseResources() {}
@@ -145,14 +150,7 @@ void PitchShifterAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
             break;
 
         case Algorithm::JuriHock:
-
             juriHockPitchShifter.process (buffer);
-            if (juriHockPitchShifter.getLatency() != previousLatency)
-            {
-                previousLatency = juriHockPitchShifter.getLatency();
-                setLatencySamples (juriHockPitchShifter.getLatency());
-            }
-
             break;
 
         case Algorithm::MineRubberband:

@@ -41,11 +41,6 @@ add_subdirectory(Libraries/JUCE)
 subproject_version(JUCE juce_version)
 message(STATUS "JUCE version: ${juce_version}")
 
-# ======================================== Libraries ============================================ #
-add_subdirectory(Libraries/stftPitchShift)
-target_include_directories(stftpitchshift INTERFACE "${stftpitchshift_SOURCE_DIR}/cpp")
-target_compile_features(stftpitchshift INTERFACE ${CPP_VERSION})
-
 # ========================================= IDE env variables ========================================== #
 set(CMAKE_XCODE_SCHEME_ENVIRONMENT OS_ACTIVITY_MODE=disable)
 
