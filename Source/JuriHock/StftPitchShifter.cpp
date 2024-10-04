@@ -38,7 +38,7 @@ void StftPitchShifter::prepare (juce::dsp::ProcessSpec& sp)
 
 void StftPitchShifter::resetCore (const State& inState)
 {
-    const bool lowlatency = true;
+    const bool lowlatency = false;
 
     const double samplerate = inState.samplerate;
     const int blocksize = lowlatency ? inState.blocksize.min : inState.blocksize.max;
