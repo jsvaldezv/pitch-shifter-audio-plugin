@@ -7,7 +7,7 @@ void StftPitchShifter::prepare (juce::dsp::ProcessSpec& sp)
     state = std::nullopt;
     core = nullptr;
     spec = sp;
-    
+
     if (spec.sampleRate < 1)
     {
         DBG ("[Custom] Prepare to play, invalid samplerate -> " << spec.sampleRate);
@@ -19,9 +19,9 @@ void StftPitchShifter::prepare (juce::dsp::ProcessSpec& sp)
         DBG ("[Custom] Prepare to play, invalid blocksize -> " << (int) spec.maximumBlockSize);
         return;
     }
-    
+
     DBG ("[Custom] Prepare to play (samplerate " << spec.sampleRate << ", blocksize " << (int) spec.maximumBlockSize << ")");
-    
+
     state = { spec.sampleRate, { (int) spec.maximumBlockSize, (int) spec.maximumBlockSize } };
 
     try
@@ -58,10 +58,8 @@ void StftPitchShifter::resetCore (const State& inState)
     updateSemitones();
 
     latency = core->latency();
-    
+
     DBG ("[Custom] Latency " << latency << " (" << static_cast<int> (1e+3 * latency / samplerate) << " ms)");
-    
-    reportLatency (latency);
 }
 
 void StftPitchShifter::resetCore()
@@ -124,15 +122,15 @@ void StftPitchShifter::process (juce::AudioBuffer<float>& buffer)
         State newstate = oldstate;
 
         newstate.blocksize.min = numSamples;
-        
+
         DBG ("Change blocksize from %d to %d" << oldstate.blocksize.min << newstate.blocksize.min);
 
         try
         {
             resetCore (newstate);
-            
+
             state = newstate;
-            
+
             process_mono_input();
             process_stereo_output();
         }
@@ -157,15 +155,15 @@ void StftPitchShifter::process (juce::AudioBuffer<float>& buffer)
     }
 
     TOC();
-    
+
     if (LAP())
     {
-        const double samplerate = state.value_or(nostate).samplerate;
-        const int blocksize  = state.value_or(nostate).blocksize.min;
+        const double samplerate = state.value_or (nostate).samplerate;
+        const int blocksize = state.value_or (nostate).blocksize.min;
 
-        juce::ignoreUnused(samplerate, blocksize);
+        juce::ignoreUnused (samplerate, blocksize);
 
-        DBG (CHRONOMETRY(samplerate, blocksize));
+        DBG (CHRONOMETRY (samplerate, blocksize));
     }
 }
 

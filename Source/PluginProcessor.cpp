@@ -75,27 +75,13 @@ void PitchShifterAudioProcessor::prepareToPlay (double sampleRate, int samplesPe
     spec.numChannels = (juce::uint32) getTotalNumOutputChannels();
     spec.sampleRate = sampleRate;
 
-    wangRubberBandPitchShifter.reportLatency = [this] (int numSamples)
-    {
-        //setLatencySamples (numSamples);
-        //DBG ("[Custom - Wang Rubberband] Latency updated in plugin processor with " << numSamples << " samples");
-    };
-    
     wangRubberBandPitchShifter.prepare (spec, true, true);
-    
     wangSoundTouchPitchShifter.prepare (spec, true, true);
     wangVocoderPitchShifter.prepare (spec);
     wubPitchShifter.prepare (spec);
     mcPhersonPitchShifter.prepare (spec);
     dysomniPitchShifter.prepare (spec);
     mineRubberbandPitchShifter.prepare (spec);
-
-    juriHockPitchShifter.reportLatency = [this] (int numSamples)
-    {
-        setLatencySamples (numSamples);
-        DBG ("[Custom] Latency updated in plugin processor with " << numSamples << " samples");
-    };
-    
     juriHockPitchShifter.prepare (spec);
 }
 
@@ -133,34 +119,34 @@ void PitchShifterAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
 
     switch ((int) apvts.getRawParameterValue (Algorithm)->load())
     {
-        case Algorithm::WangRubberband:
+        case AlgorithmChoice::WangRubberband:
             wangRubberBandPitchShifter.process (buffer);
             break;
 
-        case Algorithm::WangSoundTouch:
+        case AlgorithmChoice::WangSoundTouch:
             wangSoundTouchPitchShifter.process (buffer);
             break;
 
-        case Algorithm::WangVocoder:
+        case AlgorithmChoice::WangVocoder:
             wangVocoderPitchShifter.process (buffer);
 
-        case Algorithm::WubVocoder:
+        case AlgorithmChoice::WubVocoder:
             wubPitchShifter.process (buffer);
             break;
 
-        case Algorithm::McPherson:
+        case AlgorithmChoice::McPherson:
             mcPhersonPitchShifter.process (buffer);
             break;
 
-        case Algorithm::Dysomni:
+        case AlgorithmChoice::Dysomni:
             dysomniPitchShifter.process (buffer);
             break;
 
-        case Algorithm::JuriHock:
+        case AlgorithmChoice::JuriHock:
             juriHockPitchShifter.process (buffer);
             break;
 
-        case Algorithm::MineRubberband:
+        case AlgorithmChoice::MineRubberband:
             mineRubberbandPitchShifter.process (buffer);
             break;
     }
@@ -173,7 +159,7 @@ void PitchShifterAudioProcessor::updateParameters()
     wangRubberBandPitchShifter.setSemitones (currentSemitones);
 
     wangSoundTouchPitchShifter.setSemitones (currentSemitones);
-    
+
     wangVocoderPitchShifter.setSemitones (currentSemitones);
 
     wubPitchShifter.setSemitones (currentSemitones);
@@ -185,6 +171,20 @@ void PitchShifterAudioProcessor::updateParameters()
     juriHockPitchShifter.setSemitones (currentSemitones);
 
     mineRubberbandPitchShifter.setSemitones (currentSemitones);
+
+    if (currentAlgorithmChoice != (AlgorithmChoice) apvts.getRawParameterValue (Algorithm)->load())
+    {
+        currentAlgorithmChoice = (AlgorithmChoice) apvts.getRawParameterValue (Algorithm)->load();
+
+        if (currentAlgorithmChoice == AlgorithmChoice::JuriHock)
+            setLatencySamples (juriHockPitchShifter.getLatency());
+
+        else if (currentAlgorithmChoice == AlgorithmChoice::WangRubberband)
+            setLatencySamples (wangRubberBandPitchShifter.getLatencyEstimationInSamples());
+
+        else
+            setLatencySamples (0);
+    }
 }
 
 bool PitchShifterAudioProcessor::hasEditor() const

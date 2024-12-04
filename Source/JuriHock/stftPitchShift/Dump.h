@@ -1,67 +1,64 @@
 #pragma once
 
+#include <fstream>
 #include <iomanip>
 #include <iostream>
-#include <fstream>
 #include <span>
 #include <sstream>
 
 namespace stftpitchshift
 {
-  class Dump
-  {
-
-  public:
-
-    Dump(const std::string& filename, const size_t minindex = 0, const size_t maxindex = 0) :
-      filename(filename),
-      minindex(minindex),
-      maxindex(maxindex),
-      fileindex(0)
+    class Dump
     {
-    }
+    public:
 
-    template<class T>
-    void operator()(const std::span<const T> data)
-    {
-      if (fileindex < minindex)
-      {
-        ++fileindex;
-        return;
-      }
+        Dump (const std::string& filename, const size_t minindex = 0, const size_t maxindex = 0) : filename (filename),
+                                                                                                   minindex (minindex),
+                                                                                                   maxindex (maxindex),
+                                                                                                   fileindex (0)
+        {
+        }
 
-      if (fileindex > maxindex && maxindex > minindex)
-      {
-        ++fileindex;
-        return;
-      }
+        template <class T>
+        void operator() (const std::span<const T> data)
+        {
+            if (fileindex < minindex)
+            {
+                ++fileindex;
+                return;
+            }
 
-      std::stringstream filepath;
+            if (fileindex > maxindex && maxindex > minindex)
+            {
+                ++fileindex;
+                return;
+            }
 
-      filepath << filename;
-      filepath << ".";
-      filepath << std::setw(10) << std::setfill('0') << fileindex;
-      filepath << ".raw";
+            std::stringstream filepath;
 
-      std::ofstream file(
-        filepath.str(),
-        std::ios::out | std::ios::binary);
+            filepath << filename;
+            filepath << ".";
+            filepath << std::setw (10) << std::setfill ('0') << fileindex;
+            filepath << ".raw";
 
-      file.write(
-        reinterpret_cast<const char*>(data.data()),
-        data.size() * sizeof(T));
+            std::ofstream file (
+                filepath.str(),
+                std::ios::out | std::ios::binary);
 
-      ++fileindex;
-    }
+            file.write (
+                reinterpret_cast<const char*> (data.data()),
+                data.size() * sizeof (T));
 
-  private:
+            ++fileindex;
+        }
 
-    const std::string filename;
+    private:
 
-    const size_t minindex;
-    const size_t maxindex;
+        const std::string filename;
 
-    size_t fileindex;
+        const size_t minindex;
+        const size_t maxindex;
 
-  };
+        size_t fileindex;
+    };
 }

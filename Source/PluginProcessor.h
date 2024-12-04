@@ -64,6 +64,8 @@ private:
 
     MineRubberbandPitchShifter mineRubberbandPitchShifter;
 
+    AlgorithmChoice currentAlgorithmChoice;
+
     // Other options
     // https://github.com/kupix/bungee/tree/main/src
 

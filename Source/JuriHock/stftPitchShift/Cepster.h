@@ -11,79 +11,76 @@
 
 namespace stftpitchshift
 {
-  template<class T>
-  class Cepster
-  {
-
-  public:
-
-    Cepster(const std::shared_ptr<FFT> fft, const size_t framesize, const double samplerate) :
-      fft(fft),
-      framesize(framesize),
-      samplerate(samplerate),
-      spectrum(framesize / 2 + 1),
-      cepstrum(framesize)
+    template <class T>
+    class Cepster
     {
-    }
+    public:
 
-    double quefrency() const
-    {
-      return value;
-    }
+        Cepster (const std::shared_ptr<FFT> fft, const size_t framesize, const double samplerate) : fft (fft),
+                                                                                                    framesize (framesize),
+                                                                                                    samplerate (samplerate),
+                                                                                                    spectrum (framesize / 2 + 1),
+                                                                                                    cepstrum (framesize)
+        {
+        }
 
-    void quefrency(const double quefrency)
-    {
-      value = quefrency;
-      cutoff = static_cast<size_t>(quefrency * samplerate);
-    }
+        double quefrency() const
+        {
+            return value;
+        }
 
-    void lifter(const std::span<T> envelope)
-    {
-      assert(envelope.size() == spectrum.size());
+        void quefrency (const double quefrency)
+        {
+            value = quefrency;
+            cutoff = static_cast<size_t> (quefrency * samplerate);
+        }
 
-      for (size_t i = 0; i < envelope.size(); ++i)
-      {
-        const T value = envelope[i];
+        void lifter (const std::span<T> envelope)
+        {
+            assert (envelope.size() == spectrum.size());
 
-        spectrum[i] = value ? std::log10(value) : -12;
-      }
+            for (size_t i = 0; i < envelope.size(); ++i)
+            {
+                const T value = envelope[i];
 
-      fft->ifft(spectrum, cepstrum);
-      lowpass(cepstrum, cutoff);
-      fft->fft(cepstrum, spectrum);
+                spectrum[i] = value ? std::log10 (value) : -12;
+            }
 
-      for (size_t i = 0; i < envelope.size(); ++i)
-      {
-        const T value = spectrum[i].real();
+            fft->ifft (spectrum, cepstrum);
+            lowpass (cepstrum, cutoff);
+            fft->fft (cepstrum, spectrum);
 
-        envelope[i] = std::pow(T(10), value);
-      }
-    }
+            for (size_t i = 0; i < envelope.size(); ++i)
+            {
+                const T value = spectrum[i].real();
 
-  private:
+                envelope[i] = std::pow (T (10), value);
+            }
+        }
 
-    const std::shared_ptr<FFT> fft;
-    const size_t framesize;
-    const double samplerate;
+    private:
 
-    double value;
-    size_t cutoff;
+        const std::shared_ptr<FFT> fft;
+        const size_t framesize;
+        const double samplerate;
 
-    std::vector<std::complex<T>> spectrum;
-    std::vector<T> cepstrum;
+        double value;
+        size_t cutoff;
 
-    static void lowpass(const std::span<T> cepstrum, const size_t cutoff)
-    {
-      for (size_t i = 1; i < std::min(cutoff, cepstrum.size()); ++i)
-      {
-        cepstrum[i] *= 2;
-      }
+        std::vector<std::complex<T>> spectrum;
+        std::vector<T> cepstrum;
 
-      for (size_t i = cutoff + 1; i < cepstrum.size(); ++i)
-      {
-        cepstrum[i] = 0;
-      }
-    }
+        static void lowpass (const std::span<T> cepstrum, const size_t cutoff)
+        {
+            for (size_t i = 1; i < std::min (cutoff, cepstrum.size()); ++i)
+            {
+                cepstrum[i] *= 2;
+            }
 
-  };
+            for (size_t i = cutoff + 1; i < cepstrum.size(); ++i)
+            {
+                cepstrum[i] = 0;
+            }
+        }
+    };
 }

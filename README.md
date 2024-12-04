@@ -121,11 +121,11 @@ void prepareToPlay (double sampleRate, int samplesPerBlock) override
     spec.sampleRate = sampleRate;
 
     // Prepare the pitch shifter
-    wangRubberBandPitchShifter.prepare (spec, true, true); // Use the pitch shifter's prepare method
+    wangRubberBandPitchShifter.prepare (spec, true, true);
 
     // For other pitch shifters, adjust accordingly:
-    // dysomniPitchShifter.prepare(spec);
-    // wubPitchShifter.prepare(spec);
+    // dysomniPitchShifter.prepare (spec);
+    // wubPitchShifter.prepare (spec);
 }
 ```
 

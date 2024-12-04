@@ -1,7 +1,7 @@
-#include <stdio.h>
 #include "CLI.h"
 #include "StftPitchShift.h"
 #include "Version.h"
+#include <stdio.h>
 
 using namespace stftpitchshift;
 

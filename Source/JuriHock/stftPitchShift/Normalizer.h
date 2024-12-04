@@ -5,55 +5,53 @@
 #include <numeric>
 #include <span>
 
-template<class T>
+template <class T>
 class Normalizer
 {
-
 public:
 
-  Normalizer()
-  {
-  }
-
-  void calibrate(const std::span<const std::complex<T>> data)
-  {
-    target = rms(data);
-  }
-
-  void normalize(const std::span<std::complex<T>> data) const
-  {
-    const T a = target;
-    const T b = rms(data);
-
-    if (b == 0)
+    Normalizer()
     {
-      return;
     }
 
-    const T c = std::sqrt(a / b);
-
-    for (size_t i = 0; i < data.size(); ++i)
+    void calibrate (const std::span<const std::complex<T>> data)
     {
-      data[i].real(data[i].real() * c);
+        target = rms (data);
     }
-  }
+
+    void normalize (const std::span<std::complex<T>> data) const
+    {
+        const T a = target;
+        const T b = rms (data);
+
+        if (b == 0)
+        {
+            return;
+        }
+
+        const T c = std::sqrt (a / b);
+
+        for (size_t i = 0; i < data.size(); ++i)
+        {
+            data[i].real (data[i].real() * c);
+        }
+    }
 
 private:
 
-  T target;
+    T target;
 
-  static T rms(const std::span<const std::complex<T>> data)
-  {
-    // without 1/N and sqrt
+    static T rms (const std::span<const std::complex<T>> data)
+    {
+        // without 1/N and sqrt
 
-    return std::accumulate(
-      data.begin(),
-      data.end(),
-      T(0),
-      [](const T result, const std::complex<T>& value)
-      {
-        return result + value.real() * value.real();
-      });
-  }
-
+        return std::accumulate (
+            data.begin(),
+            data.end(),
+            T (0),
+            [] (const T result, const std::complex<T>& value)
+        {
+            return result + value.real() * value.real();
+        });
+    }
 };

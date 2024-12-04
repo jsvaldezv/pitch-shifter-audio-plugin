@@ -5,218 +5,202 @@
 
 struct CLI
 {
-
 public:
 
-  std::string args = "";
-  std::string error = "";
+    std::string args = "";
+    std::string error = "";
 
-  bool empty = false;
-  bool help = false;
-  bool version = false;
+    bool empty = false;
+    bool help = false;
+    bool version = false;
 
-  bool chronometry = false;
-  bool normalization = false;
+    bool chronometry = false;
+    bool normalization = false;
 
-  std::string input = "";
-  std::string output = "";
+    std::string input = "";
+    std::string output = "";
 
-  std::vector<double> factors = { 1 };
-  double quefrency = 0;
-  double distortion = 1;
+    std::vector<double> factors = { 1 };
+    double quefrency = 0;
+    double distortion = 1;
 
-  std::tuple<size_t, size_t> framesize = { 1024, 1024 };
-  size_t hoprate = 32;
+    std::tuple<size_t, size_t> framesize = { 1024, 1024 };
+    size_t hoprate = 32;
 
-  CLI(int argc, char** argv) :
-    args(join(std::vector<std::string>(argv, argv + argc), ' '))
-  {
-    parse(argc, argv, true);
-  }
-
-  CLI(const std::string& args) :
-    args(args)
-  {
-    std::vector<std::string> strings = split(args, ' ');
-    std::vector<char*> chars;
-
-    strings.insert(strings.begin(), "stftpitchshift");
-
-    for (std::string& str : strings)
+    CLI (int argc, char** argv) : args (join (std::vector<std::string> (argv, argv + argc), ' '))
     {
-      chars.push_back(const_cast<char*>(str.c_str()));
+        parse (argc, argv, true);
     }
 
-    chars.push_back(0);
+    CLI (const std::string& args) : args (args)
+    {
+        std::vector<std::string> strings = split (args, ' ');
+        std::vector<char*> chars;
 
-    parse(static_cast<int>(chars.size()), &chars.front(), false);
-  }
+        strings.insert (strings.begin(), "stftpitchshift");
 
-  std::string dump()
-  {
-    std::stringstream buffer;
+        for (std::string& str : strings)
+        {
+            chars.push_back (const_cast<char*> (str.c_str()));
+        }
 
-    buffer << "args: " << args << std::endl;
-    buffer << "error: " << error << std::endl;
+        chars.push_back (0);
 
-    buffer << "empty: " << empty << std::endl;
-    buffer << "help: " << help << std::endl;
-    buffer << "version: " << version << std::endl;
+        parse (static_cast<int> (chars.size()), &chars.front(), false);
+    }
 
-    buffer << "chronometry: " << chronometry << std::endl;
-    buffer << "normalization: " << normalization << std::endl;
+    std::string dump()
+    {
+        std::stringstream buffer;
 
-    buffer << "input: " << input << std::endl;
-    buffer << "output: " << output << std::endl;
+        buffer << "args: " << args << std::endl;
+        buffer << "error: " << error << std::endl;
 
-    buffer << "factors: " << join(factors, ',') << std::endl;
-    buffer << "quefrency: " << quefrency << std::endl;
-    buffer << "distortion: " << distortion << std::endl;
-    buffer << "framesize: " << join(framesize, ',') << std::endl;
-    buffer << "hoprate: " << hoprate << std::endl;
+        buffer << "empty: " << empty << std::endl;
+        buffer << "help: " << help << std::endl;
+        buffer << "version: " << version << std::endl;
 
-    return buffer.str();
-  }
+        buffer << "chronometry: " << chronometry << std::endl;
+        buffer << "normalization: " << normalization << std::endl;
 
-  std::string usage()
-  {
-    return options.help();
-  }
+        buffer << "input: " << input << std::endl;
+        buffer << "output: " << output << std::endl;
+
+        buffer << "factors: " << join (factors, ',') << std::endl;
+        buffer << "quefrency: " << quefrency << std::endl;
+        buffer << "distortion: " << distortion << std::endl;
+        buffer << "framesize: " << join (framesize, ',') << std::endl;
+        buffer << "hoprate: " << hoprate << std::endl;
+
+        return buffer.str();
+    }
+
+    std::string usage()
+    {
+        return options.help();
+    }
 
 private:
 
-  cxxopts::Options options = cxxopts::Options("stftpitchshift", "STFT based pitch and timbre shifting");
+    cxxopts::Options options = cxxopts::Options ("stftpitchshift", "STFT based pitch and timbre shifting");
 
-  void parse(int argc, char** argv, bool io)
-  {
-    options.add_options()
-      ("h,help", "print this help")
-      ("version", "print version number")
-      ("c,chrono", "enable runtime measurements");
-
-    if (io)
+    void parse (int argc, char** argv, bool io)
     {
-      options.add_options("file")
-        ("i,input", "input .wav file name", cxxopts::value<std::string>())
-        ("o,output", "output .wav file name", cxxopts::value<std::string>());
-    }
+        options.add_options() ("h,help", "print this help") ("version", "print version number") ("c,chrono", "enable runtime measurements");
 
-    options.add_options("pitch shifting")
-      ("p,pitch", "fractional pitch shifting factors separated by comma", cxxopts::value<std::string>()->default_value("1.0"))
-      ("q,quefrency", "optional formant lifter quefrency in milliseconds", cxxopts::value<std::string>()->default_value("0.0"))
-      ("t,timbre", "fractional timbre shifting factor related to -q", cxxopts::value<std::string>()->default_value("1.0"))
-      ("r,rms", "enable spectral rms normalization");
-
-    options.add_options("stft")
-      ("w,window", "stft window size", cxxopts::value<std::string>()->default_value("1024"))
-      ("v,overlap", "stft window overlap", cxxopts::value<std::string>()->default_value("32"));
-
-    const auto args = options.parse(argc, argv);
-
-    try
-    {
-      if (argc < 2)
-      {
-        empty = true;
-      }
-
-      if (args.count("help"))
-      {
-        help = true;
-      }
-
-      if (args.count("version"))
-      {
-        version = true;
-      }
-
-      if (args.count("chrono"))
-      {
-        chronometry = true;
-      }
-
-      if (args.count("rms"))
-      {
-        normalization = true;
-      }
-
-      if (args.count("input"))
-      {
-        input = args["input"].as<std::string>();
-      }
-
-      if (args.count("output"))
-      {
-        output = args["output"].as<std::string>();
-      }
-
-      if (args.count("pitch"))
-      {
-        const std::vector<std::string> values = split(
-          args["pitch"].as<std::string>(), ',');
-
-        if (!values.empty())
+        if (io)
         {
-          std::set<double> distinct;
+            options.add_options ("file") ("i,input", "input .wav file name", cxxopts::value<std::string>()) ("o,output", "output .wav file name", cxxopts::value<std::string>());
+        }
 
-          for (const std::string& value : values)
-          {
-            double factor;
+        options.add_options ("pitch shifting") ("p,pitch", "fractional pitch shifting factors separated by comma", cxxopts::value<std::string>()->default_value ("1.0")) ("q,quefrency", "optional formant lifter quefrency in milliseconds", cxxopts::value<std::string>()->default_value ("0.0")) ("t,timbre", "fractional timbre shifting factor related to -q", cxxopts::value<std::string>()->default_value ("1.0")) ("r,rms", "enable spectral rms normalization");
 
-            if (semicent(value))
+        options.add_options ("stft") ("w,window", "stft window size", cxxopts::value<std::string>()->default_value ("1024")) ("v,overlap", "stft window overlap", cxxopts::value<std::string>()->default_value ("32"));
+
+        const auto args = options.parse (argc, argv);
+
+        try
+        {
+            if (argc < 2)
             {
-              factor = semitone(value) * cent(value);
-            }
-            else
-            {
-              factor = std::stod(value);
+                empty = true;
             }
 
-            distinct.insert(factor);
-          }
+            if (args.count ("help"))
+            {
+                help = true;
+            }
 
-          factors.assign(distinct.begin(), distinct.end());
-        }
-      }
+            if (args.count ("version"))
+            {
+                version = true;
+            }
 
-      if (args.count("quefrency"))
-      {
-        quefrency = std::stod(args["quefrency"].as<std::string>()) * 1e-3;
-      }
+            if (args.count ("chrono"))
+            {
+                chronometry = true;
+            }
 
-      if (args.count("timbre"))
-      {
-        const std::string value = args["timbre"].as<std::string>();
+            if (args.count ("rms"))
+            {
+                normalization = true;
+            }
 
-        if (semicent(value))
+            if (args.count ("input"))
+            {
+                input = args["input"].as<std::string>();
+            }
+
+            if (args.count ("output"))
+            {
+                output = args["output"].as<std::string>();
+            }
+
+            if (args.count ("pitch"))
+            {
+                const std::vector<std::string> values = split (
+                    args["pitch"].as<std::string>(), ',');
+
+                if (! values.empty())
+                {
+                    std::set<double> distinct;
+
+                    for (const std::string& value : values)
+                    {
+                        double factor;
+
+                        if (semicent (value))
+                        {
+                            factor = semitone (value) * cent (value);
+                        }
+                        else
+                        {
+                            factor = std::stod (value);
+                        }
+
+                        distinct.insert (factor);
+                    }
+
+                    factors.assign (distinct.begin(), distinct.end());
+                }
+            }
+
+            if (args.count ("quefrency"))
+            {
+                quefrency = std::stod (args["quefrency"].as<std::string>()) * 1e-3;
+            }
+
+            if (args.count ("timbre"))
+            {
+                const std::string value = args["timbre"].as<std::string>();
+
+                if (semicent (value))
+                {
+                    distortion = semitone (value) * cent (value);
+                }
+                else
+                {
+                    distortion = std::stod (value);
+                }
+            }
+
+            if (args.count ("window"))
+            {
+                const std::vector<std::string> values = split (
+                    args["window"].as<std::string>(), ',');
+
+                framesize = std::make_tuple (
+                    number (values.front()),
+                    number (values.back()));
+            }
+
+            if (args.count ("overlap"))
+            {
+                hoprate = std::stoi (args["overlap"].as<std::string>());
+            }
+        } catch (const std::exception& exception)
         {
-          distortion = semitone(value) * cent(value);
+            error = exception.what();
         }
-        else
-        {
-          distortion = std::stod(value);
-        }
-      }
-
-      if (args.count("window"))
-      {
-        const std::vector<std::string> values = split(
-          args["window"].as<std::string>(), ',');
-
-        framesize = std::make_tuple(
-          number(values.front()),
-          number(values.back()));
-      }
-
-      if (args.count("overlap"))
-      {
-        hoprate = std::stoi(args["overlap"].as<std::string>());
-      }
     }
-    catch (const std::exception& exception)
-    {
-      error = exception.what();
-    }
-  }
-
 };

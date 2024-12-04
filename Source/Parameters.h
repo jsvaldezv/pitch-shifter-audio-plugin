@@ -1,7 +1,7 @@
 #pragma once
 #include <JuceHeader.h>
 
-enum Algorithm
+enum AlgorithmChoice
 {
     WangRubberband = 0,
     WangSoundTouch = 1,

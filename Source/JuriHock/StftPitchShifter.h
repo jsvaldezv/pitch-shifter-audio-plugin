@@ -63,15 +63,16 @@ public:
     void updateSemitones();
 
     int getLatency() { return latency; }
-    
-    std::function<void(int)> reportLatency;
 
 private:
-    
+
     struct State
     {
         double samplerate {};
-        struct { int min, max; } blocksize {};
+        struct
+        {
+            int min, max;
+        } blocksize {};
     };
 
     const State nostate;
@@ -88,6 +89,6 @@ private:
 
     void resetCore();
     void resetCore (const State& state);
-    
+
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (StftPitchShifter)
 };

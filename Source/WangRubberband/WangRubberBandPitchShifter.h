@@ -48,8 +48,6 @@ public:
         }
 
         setMixPercentage (100.0f);
-        
-        reportLatency (getLatencyEstimationInSamples());
     }
 
     /** Pitch shift a juce::AudioBuffer<float>
@@ -172,8 +170,6 @@ public:
     {
         return (int) (maxSamples * 3.0 + initLatency);
     }
-    
-    std::function<void(int)> reportLatency;
 
 private:
 
@@ -183,5 +179,4 @@ private:
     float oldPitch, pitchParam, mixParam { 100.0f };
     std::unique_ptr<juce::dsp::DryWetMixer<float>> dryWet;
     juce::SmoothedValue<float> timeSmoothing, mixSmoothing, pitchSmoothing;
-
 };
