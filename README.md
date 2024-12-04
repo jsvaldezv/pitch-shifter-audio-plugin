@@ -65,7 +65,6 @@ git submodule update --init --recursive
 The following submodules are required for the plugin to work:
 
 - **JUCE Framework**: Provides the core functionality for the plugin. Clone from JUCE GitHub Repository.
-- **STFT Pitch Shifter**: An algorithm that relies on Short-Time Fourier Transform (STFT). Clone from Juri Hock's STFT Pitch Shift Plugin.
 
 Ensure these submodules are initialized by running:
 
@@ -98,7 +97,7 @@ Once the include is in place, create the pitch shifter object as a member of you
 ```bash
 class MyAudioProcessor : public juce::AudioProcessor
 {
-public:
+private:
     // Pitch shifter object declaration
     WangRubberBandPitchShifter wangRubberBandPitchShifter;
     
@@ -131,7 +130,7 @@ void prepareToPlay (double sampleRate, int samplesPerBlock) override
 
 ### 4. Set the Semitones for Pitch Shifting
 
-You can set the number of semitones that the pitch shifter should shift by using the setSemitones method. This should be done whenever the pitch shift needs to be updated, such as from a UI control.
+You can set the number of semitones that the pitch shifter should shift by using the setSemitones method. This should be done whenever the pitch shift needs to be updated.
 
 ```bash
 void setPitchShifting (int currentSemitones)
