@@ -1,3 +1,34 @@
 .DS_Store
+
+# JUCE
 Builds/
 JuceLibraryCode/
+
+# IDEs
+xcode/
+Xcode/
+vs/
+vs22/
+Release/
+PreRelease/
+
+# plugins
+*.vst3
+*.component
+*.aaxplugin
+*.vst
+*.dll
+
+# Installers
+*.pkg
+*.dmg
+*.exe
+*.zip
+build/
+Release/
+
+# Clion cmake builds
+cmake-build-debug
+cmake-build-release
+cmake-build-relwithdebinfo
+.idea
