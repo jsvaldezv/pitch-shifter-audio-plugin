@@ -1,10 +1,19 @@
 # Pitch Shifter in JUCE
 
-## Introduction
+https://github.com/user-attachments/assets/9f1395b3-5752-4239-8685-10a27f3fbabb
 
-The plugin is developed in C++ using the JUCE library. This plugin allows users to modify the pitch of an audio signal within a range of +/- 12 semitones, offering flexibility for applying effects like harmonization, pitch shifting, or tuning correction. Additionally, users can choose between different pitch-shifting algorithms to suit their creative or technical needs.
+This audio plugin is developed in C++ using the JUCE framework, and provides a powerful yet intuitive tool for real-time pitch manipulation.
 
-The plugin is designed to be intuitive, offering a simple interface to select the number of semitones and the algorithm type. This makes it ideal for both beginners and audio professionals looking for a powerful solution to manipulate the pitch of their recordings.
+Users can shift the pitch of an audio signal by ±12 semitones, making it ideal for tasks like harmonization, creative pitch shifting, or tuning correction. The plugin also offers the flexibility to select between multiple pitch-shifting algorithms, allowing you to tailor the sound to your artistic or technical needs.
+
+🎚️ Key Features:
+
+- Pitch adjustment range of ±12 semitones
+- Multiple algorithm options for different sound qualities
+- Simple and clean UI for selecting semitone shift and algorithm type
+- Designed for both beginners and audio professionals
+
+Whether you're fine-tuning vocals or creating experimental textures, this plugin offers a versatile solution for precise and creative pitch manipulation.
 
 ## Algorithms
 
@@ -65,12 +74,6 @@ git submodule update --init --recursive
 The following submodules are required for the plugin to work:
 
 - **JUCE Framework**: Provides the core functionality for the plugin. Clone from JUCE GitHub Repository.
-
-Ensure these submodules are initialized by running:
-
-```bash
-git submodule update --init --recursive
-```
 
 ---
 
