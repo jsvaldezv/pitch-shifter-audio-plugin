@@ -18,26 +18,6 @@ set(JUCE_DEPENDENCIES
 # ========================================== Project ============================================ #
 set(FORMATS AU VST3 Standalone)
 
-# Add plugin copy step paths
-if(CUSTOM_PATH STREQUAL "default")
-    if(CMAKE_GENERATOR MATCHES "Xcode" OR CMAKE_GENERATOR MATCHES "Unix Makefiles")
-        set(VST3_PATH "${USER_DIR}/Library/Audio/Plug-Ins/VST3")
-        set(VST_PATH "${USER_DIR}/Library/Audio/Plug-Ins/VST")
-        set(AAX_PATH "/Library/Application Support/Avid/Audio/Plug-Ins")
-        set(AU_PATH "${USER_DIR}/Library/Audio/Plug-Ins/Components")
-    else() # Windows
-        set(VST3_PATH "C://Program Files//Common Files//VST3")
-        set(VST_PATH "C://Program Files//VstPlugins")
-        set(AAX_PATH "C://Program Files//Common Files//Avid//Audio//Plug-Ins")
-        set(AU_PATH "")
-    endif()
-else() # Windows
-    set(VST3_PATH ${CUSTOM_PATH})
-    set(VST_PATH ${CUSTOM_PATH})
-    set(AAX_PATH ${CUSTOM_PATH})
-    set(AU_PATH ${CUSTOM_PATH})
-endif()
-
 juce_add_plugin(${PROJECT_NAME}
     COMPANY_NAME "jsvaldezv"
     COMPANY_WEBSITE ""
@@ -52,7 +32,7 @@ juce_add_plugin(${PROJECT_NAME}
     IS_MIDI_EFFECT FALSE                
     EDITOR_WANTS_KEYBOARD_FOCUS FALSE
     COPY_PLUGIN_AFTER_BUILD TRUE		 
-     
+    
     PLUGIN_CODE ${CURRENT_PLUGIN_CODE}                     
     FORMATS "${FORMATS}"
     PRODUCT_NAME ${PROJECT_NAME}
@@ -61,11 +41,6 @@ juce_add_plugin(${PROJECT_NAME}
     VST2_CATEGORY kPlugCategEffect
     AU_MAIN_TYPE kAudioUnitType_Effect
     AAX_CATEGORY AAX_EPlugInCategory_PitchShift
-
-    VST3_COPY_DIR ${VST3_PATH}
-    VST_COPY_DIR ${VST_PATH}
-    AAX_COPY_DIR ${AAX_PATH}
-    AU_COPY_DIR ${AU_PATH}
 )
 
 # Set C++ version for a given target
@@ -104,22 +79,9 @@ target_link_libraries(${PROJECT_NAME}
 
 target_compile_definitions(${PROJECT_NAME}
     PUBLIC
-    JUCE_WEB_BROWSER=0 
-    JUCE_USE_CURL=0
-    JUCE_MODAL_LOOPS_PERMITTED=0
     JUCE_DISPLAY_SPLASH_SCREEN=0
     JUCE_VST3_CAN_REPLACE_VST2=0
-    JUCE_PLUGINHOST_AU=0
-    JUCE_PLUGINHOST_VST3=0
-    JUCE_PLUGINHOST_VST=0
-
-    $<$<CONFIG:PreRelease>:JUCE_DEBUG=0>
-    $<$<CONFIG:PreRelease>:PRE_RELEASE=1>
 )
-
-# CMAKE_CXX_FLAGS_PRERELEASE created when adding PreRelease configuration. 
-# Setting missing compile flags to match Release flags. 
-set(CMAKE_CXX_FLAGS_PRERELEASE "-O3 -DNDEBUG -flto")
 
 juce_generate_juce_header(${PROJECT_NAME})
 
