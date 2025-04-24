@@ -1,4 +1,4 @@
-# Pitch Shifter in JUCE
+# Pitch Shifter Audio Plugin in JUCE
 
 https://github.com/user-attachments/assets/9f1395b3-5752-4239-8685-10a27f3fbabb
 
