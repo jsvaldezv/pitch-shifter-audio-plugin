@@ -164,8 +164,5 @@ private:
     long latestDataIndex = 0;
     int writeHopSize = 0;
     int readHopSize = 0;
-
-#ifdef DEBUG
     const char* name = "";
-#endif
 };
